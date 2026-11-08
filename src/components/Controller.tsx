@@ -4,7 +4,7 @@ import { Ring } from './Ring';
 import { Dice } from './Dice';
 import { RichText } from './Rich';
 import { PlayersPanel } from './PlayersPanel';
-import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2, startRound3 } from '@/game/engine';
+import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2, startRound3, startTimer, COUNTDOWN_MS } from '@/game/engine';
 import type { GameState } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
@@ -79,10 +79,15 @@ export function Controller({ state: s, update, now }: { state: GameState; update
               {book && drum && <p className="hint">🥁 Tromgeroffel...</p>}
               {task.sub && <div className="task-sub"><RichText rich={task.sub} players={s.players} /></div>}
               {book?.stage === 'revealed' && book.reveal && <div className="reveal"><RichText rich={book.reveal} players={s.players} /></div>}
-              {task.timerSec && !t.timerDone && t.timerEndsAt && <div className="timer-sm">⏱️ {Math.max(0, Math.ceil((t.timerEndsAt - now) / 1000))}s</div>}
+              {task.foot && <div className="task-sub">{task.foot}</div>}
+              {task.timerSec && t.timerStartsAt && now < t.timerStartsAt && <div className="timer-sm">Klaar? {Math.ceil((t.timerStartsAt - now) / 1000)}...</div>}
+              {task.timerSec && !t.timerDone && t.timerStartsAt && now >= t.timerStartsAt && t.timerEndsAt && <div className="timer-sm">⏱️ {Math.max(0, Math.ceil((t.timerEndsAt - now) / 1000))}s</div>}
               {t.timerDone && task.timerSec && <div className="timer-sm">⏰ Tijd is om!</div>}
             </div>
 
+            {task.timerSec && !t.timerEndsAt && (
+              <button className="btn clock-btn" onClick={() => update(startTimer)}>▶️ Start klok ({task.timerSec}s)<small>Eerst rustig lezen, dan 3-2-1-GO!</small></button>
+            )}
             {book && book.stage === 'riddle' && (
               <button className="btn reveal-btn" disabled={drum} onClick={() => update(revealBook)}>👀 Onthul de schuldige</button>
             )}
@@ -100,7 +105,7 @@ export function Controller({ state: s, update, now }: { state: GameState; update
             disabled={t.stage === 'rolling'}
             onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}
           >
-            {armed === 'r2' ? 'Zeker weten? Tik nogmaals!' : 'Stapel is leeg → Start Ronde 2'}
+            {armed === 'r2' ? 'Zeker weten? Tik nogmaals!' : 'Stapel is leeg → Start Ronde 2 (Uitpakken)'}
           </button>
         </section>
       )}
@@ -112,7 +117,7 @@ export function Controller({ state: s, update, now }: { state: GameState; update
             disabled={t.stage === 'rolling'}
             onClick={() => (armed === 'r3' ? (setArmed(''), update(startRound3)) : setArmed('r3'))}
           >
-            {armed === 'r3' ? 'Zeker weten? Tik nogmaals om de finale te starten!' : 'Alle cadeaus zijn uitgepakt → Start De Grote Finale (Ronde 3)'}
+            {armed === 'r3' ? 'Zeker weten? Tik nogmaals om de finale te starten!' : 'Alles is uitgepakt → Start De Finale (Ronde 3)'}
           </button>
         </section>
       )}

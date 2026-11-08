@@ -29,7 +29,8 @@ export function useSoundDriver(state: GameState | null, now: number, enabled: bo
   let secLeft: number | null = null;
   let urgent = false;
   if (state && t) {
-    if (t.stage === 'task' && t.timerEndsAt && !t.timerDone) secLeft = Math.ceil((t.timerEndsAt - now) / 1000);
+    if (t.stage === 'task' && t.timerStartsAt && now < t.timerStartsAt) { secLeft = Math.ceil((t.timerStartsAt - now) / 1000); urgent = true; } // Klaar? 3-2-1
+    else if (t.stage === 'task' && t.timerEndsAt && !t.timerDone) secLeft = Math.ceil((t.timerEndsAt - now) / 1000);
     else if (t.stage === 'ready' && t.deadline) {
       const s = Math.ceil((t.deadline - now) / 1000);
       if (s <= 5) { secLeft = s; urgent = true; }

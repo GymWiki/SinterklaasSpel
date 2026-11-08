@@ -170,7 +170,7 @@ a { color: inherit; }
 .tv-empty h1 { font-size: 6vmin; }
 .tv {
   position: fixed; inset: 0; height: 100vh; height: 100dvh; width: 100vw; overflow: hidden; display: grid;
-  grid-template-rows: 12vh 1fr; background: radial-gradient(120vmax 80vmax at 30% 20%, #3a1d6e, #120d2b 70%);
+  grid-template-rows: 12vh 1fr 5vh; background: radial-gradient(120vmax 80vmax at 30% 20%, #3a1d6e, #120d2b 70%);
   font-size: 3vmin; user-select: none; cursor: none;
 }
 .tv::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 transparent; transition: box-shadow 1s; }
@@ -183,7 +183,8 @@ a { color: inherit; }
 .waves { position: absolute; inset: 0; background: repeating-radial-gradient(circle at 2vmin 8vh, transparent 0 2vmin, #ffffff18 2vmin 2.4vmin); background-size: 6vmin 100%; animation: waves 4s linear infinite; }
 .boat { position: absolute; top: 0; font-size: 6.4vh; line-height: 8vh; animation: bob 2s ease-in-out infinite; }
 .quay { position: absolute; right: 1vmin; top: 0; font-size: 6vh; line-height: 8vh; }
-.tv-main { display: grid; grid-template-columns: 62% 38%; min-height: 0; padding: 0 2vw 2vh; gap: 1vw; }
+.tv-main { display: grid; grid-template-columns: 62% 38%; min-height: 0; padding: 0 2vw 0; gap: 1vw; }
+.tv-main.with-legend { grid-template-columns: 21% 43% 36%; }
 .tv-ring { min-height: 0; min-width: 0; }
 .tv-panel { min-height: 0; display: grid; align-content: center; padding: 1vmin 1vw; overflow: hidden; }
 
@@ -298,3 +299,24 @@ a { color: inherit; }
   100% { transform: translateY(0) rotate(720deg); }
 }
 @media (prefers-reduced-motion: reduce) { .seat, .dice { transition: none; } }
+
+/* Dobbelsteen-Legenda */
+.legend { align-self: center; max-height: 100%; background: #ffffff12; border: 0.3vmin solid #ffffff22; border-radius: 2vmin; padding: 1.4vmin 1.2vmin; display: grid; gap: 1vmin; overflow: hidden; backdrop-filter: blur(2px); }
+.legend-title { font-size: 2.2vmin; font-weight: 900; color: var(--gold); text-align: center; letter-spacing: 0.1vmin; }
+.legend ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8vmin; }
+.legend li { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1vmin; padding: 0.9vmin 1vmin; border-radius: 1.4vmin; border: 0.3vmin solid transparent; font-size: 2.1vmin; font-weight: 700; line-height: 1.15; opacity: 0.85; transition: transform 0.3s, background 0.3s, border-color 0.3s, opacity 0.3s; }
+.legend .ld { font-size: 5vmin; line-height: 1; color: #fff; }
+.legend li.on { opacity: 1; background: #ffc93c33; border-color: var(--gold); transform: scale(1.06); box-shadow: 0 0 2.4vmin #ffc93c88; animation: legendpulse 1.1s ease-in-out infinite alternate; }
+.legend li.on .ld { color: var(--gold); }
+@keyframes legendpulse { from { transform: scale(1.04); } to { transform: scale(1.08); } }
+.tv-foot { display: grid; place-items: center; font-size: 2.6vmin; font-weight: 800; color: var(--gold); padding: 0 2vw; text-align: center; }
+.clock-wait { font-size: 2.6vmin; font-weight: 800; background: #ffffff18; padding: 1vmin 2vmin; border-radius: 99px; width: fit-content; }
+.countdown { font-size: 9vmin; font-weight: 900; color: var(--gold); animation: pulse 0.5s infinite alternate; }
+.countdown.go { color: #7dff8a; font-size: 12vmin; }
+.btn.clock-btn { width: 100%; min-height: 78px; font-size: 22px; background: #2b7bff; color: #fff; flex-direction: column; gap: 2px; border-radius: 20px; }
+.btn.clock-btn small { font-weight: 600; font-size: 13px; opacity: 0.9; }
+.panel-turn.compact { gap: 1.2vmin; }
+.panel-turn.compact .turn-who { font-size: 5.6vmin; }
+.panel-turn.compact .timer { width: 12vmin; height: 12vmin; font-size: 6.5vmin; }
+.panel-turn.compact .countdown { font-size: 7vmin; }
+.panel-turn.compact .goal { font-size: 2.1vmin; }

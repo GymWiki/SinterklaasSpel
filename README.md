@@ -25,10 +25,12 @@ Tabellen worden automatisch aangemaakt (`CREATE TABLE IF NOT EXISTS`); `npm run 
 Alles draait 100% lokaal (localStorage); er zijn geen database-requests nodig. TV en controller moeten in dezelfde browser
 (twee tabbladen/vensters op dezelfde laptop) draaien.
 
-Drie rondes:
-1. **Verdeelronde** (geen tijdslimiet): 6 vaste uitkomsten, tot de stapel leeg is.
-2. **Uitpak- & Kijkronde** (geen tijdslimiet): tot elk cadeau is uitgepakt (uitpakken, buren-ruil, overkant-wissel, 10s-duel, cadeau-balans).
-3. **Geheime Stoomboot-Finale** (geheime timer): stelen, Kluis 🔒, Mijter 🛡️, 10s-duel, richting omdraaien en Chaos van Piet (stoelendans). Laatste 5 minuten: 20s Schiet-op-Piet, vals alarm, turbo en eindsignaal.
+Drie rondes, met per ronde een vaste betekenis per dobbelsteen-getal (zichtbaar in de **Dobbelsteen-Legenda** links op het TV-scherm; het gegooide getal licht op):
+1. **Verdeelronde** (geen tijdslimiet): 6 vaste regels, tot de stapel leeg is.
+2. **Uitpakronde** (geen tijdslimiet): rustige vaste regels; alleen gooi 4 is een Huiskamer-Opdracht.
+3. **Geheime Stoomboot-Finale** (geheime timer): vaste categorie per getal, Kluis 🔒 / Mijter 🛡️, gooi 4 = Opdrachten-Deck, gooi 6 = Chaos van Piet (Chaos-Deck van 6 kaarten). Laatste 5 minuten: 20s Schiet-op-Piet, vals alarm, turbo en eindsignaal.
+
+Het Opdrachten-Deck (`src/content/deck.ts`, 50 kaarten, Smart Deck zonder herhaling) heeft kaarten met een timer. Die start niet vanzelf: de host tikt "▶️ Start klok", waarna de TV "Klaar? 3... 2... 1... GO!" aftelt.
 
 **Het Grote Boek staat uit** (`src/lib/features.ts` → `FEATURES.book = false`). Code, API-routes (`/api/rooms/**`),
 pagina's `/nieuw` en `/join/[roomId]` en de Drizzle-tabellen (`rooms`, `submissions`) zijn intact; zet de vlag op `true` om alles terug te krijgen.

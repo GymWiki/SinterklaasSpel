@@ -7,9 +7,10 @@
  */
 import { forAudience, type Audience } from '@/content/tags';
 import { R1_FIXED, type TaskTpl } from '@/content/round1';
-import { R2_BALANCE, R2_DUEL_SUB, R2_NEIGHBOR, R2_OPPOSITE, R2_UNWRAP } from '@/content/round2';
+import { R2_FIXED } from '@/content/round2';
+import { DECK, DECK_CATS } from '@/content/deck';
 import { FEATURES } from '@/lib/features';
-import { R3_BIGCHAIRS, R3_BONUS, R3_CHAIRS, R3_DOUBLE, R3_DUEL_SUB, R_DUELS, R3_MIJTER, R3_REVERSE, R3_SHIFT, R3_STEAL, R3_SWAP, R3_VAULT } from '@/content/round3';
+import { CHAOS, R3_FOOT, R3_MIJTER, R3_REVERSE, R3_SHIFT, R3_SHIFT_SUB, R3_STEAL, R3_VAULT } from '@/content/round3';
 import { BOOK_FALLBACK, BOOK_FALLBACK_REVEAL } from '@/content/book';
 import { GENERAL_TARGET } from '@/lib/constants';
 import type {
@@ -169,154 +170,105 @@ function buildRound1(s: GameState, die: number, activeId: string): Built {
   return { task, effects: [], decks: s.decks };
 }
 
-function buildRound2(s: GameState, die: number, activeId: string): Built {
-  const c = seatContext(s, activeId);
-  const slots = slotsOf(c);
-  const mk = (kind: TaskKind, title: string, emoji: string, tpl: TaskTpl, hl: string[], sl = slots): Task => ({
-    kind, title, emoji, main: rich(tpl.t, sl), sub: tpl.sub ? rich(tpl.sub, sl) : undefined, timerSec: tpl.timer, highlight: hl,
-  });
-  if (die === 1 || die === 6) {
-    const { tpl, decks } = pickTpl(s, 'r2:unwrap', R2_UNWRAP);
-    return { task: mk('unwrap', 'UITPAKKEN!', '🎁', tpl, [c.A.id]), effects: [], decks };
-  }
-  if (die === 2) {
-    const { tpl, decks } = pickTpl(s, 'r2:neighbor', R2_NEIGHBOR);
-    return { task: mk('neighbor', 'BUREN-RUIL', '🔄', tpl, [c.A.id, tpl.focus === 'R' ? c.R.id : c.L.id]), effects: [], decks };
-  }
-  if (die === 3) {
-    const { tpl, decks } = pickTpl(s, 'r2:opposite', R2_OPPOSITE);
-    return { task: mk('opposite', 'OVERKANT-WISSEL', '↔️', tpl, [c.A.id, c.O.id]), effects: [], decks };
-  }
-  if (die === 4) {
-    const X = c.X;
-    const { tpl, decks } = pickTpl(s, 'r2:duel', R_DUELS);
-    const sl = { A: c.A.id, X: X.id };
-    const task = mk('duel', '10-SECONDEN DUEL', '⚔️', { ...tpl, sub: R2_DUEL_SUB }, [c.A.id, X.id], sl);
-    return { task, effects: [], decks };
-  }
-  const { tpl, decks } = pickTpl(s, 'r2:balance', R2_BALANCE);
-  return { task: mk('balance', 'CADEAU-BALANS', '⚖️', tpl, [c.A.id]), effects: [], decks };
+const dirText = (d: 1 | -1) => (d === 1 ? 'met de klok mee' : 'tegen de klok in');
+const tokensIn = (t: string) => Array.from(new Set(Array.from(t.matchAll(/\{([ALROX])\}/g), (m) => m[1])));
+
+/** Trek 1 kaart uit het Opdrachten-Deck (ronde 2 & 3 delen één Smart Deck: geen herhaling). */
+function deckTask(s: GameState, c: ReturnType<typeof seatContext>, round: 2 | 3): Built {
+  const { idx, decks } = drawDeck(s.decks, 'deck', DECK.length);
+  const card = DECK[idx];
+  const others = activePlayers(s).filter((p) => p.id !== c.A.id);
+  const pool = round === 3 ? others.filter((p) => p.id !== s.mijter) : others; // de Mijter is immuun voor stelen
+  const X = pick(pool.length ? pool : others.length ? others : [c.A]);
+  const slots: Record<string, string> = { ...slotsOf(c), X: X.id };
+  const hl = tokensIn(card.t).map((k) => slots[k]);
+  const cat = DECK_CATS[card.cat];
+  const task: Task = {
+    kind: 'deck', emoji: cat.emoji, title: cat.title, main: rich(card.t, slots),
+    sub: rich(round === 2 ? 'Cadeau gewonnen of gestolen dat nog ingepakt is? Pak het dan direct uit!' : 'Een cadeau in de Kluis 🔒 of van de Mijter 🛡️ mag niet worden gestolen.'),
+    timerSec: card.sec > 0 ? card.sec : undefined,
+    highlight: Array.from(new Set([c.A.id, ...hl])),
+  };
+  return { task, effects: [], decks };
 }
 
-const dirText = (d: 1 | -1) => (d === 1 ? 'met de klok mee' : 'tegen de klok in');
+function buildRound2(s: GameState, die: number, activeId: string): Built {
+  const c = seatContext(s, activeId);
+  if (die === 4) return deckTask(s, c, 2);
+  const f = R2_FIXED[die];
+  const slots = slotsOf(c);
+  const task: Task = {
+    kind: f.kind, title: f.title, emoji: f.emoji, main: rich(f.main, slots), sub: f.sub ? rich(f.sub, slots) : undefined,
+    highlight: [c.A.id, ...(f.with ?? []).map((k) => slots[k])],
+  };
+  return { task, effects: [], decks: s.decks };
+}
 
 function buildRound3(s: GameState, die: number, activeId: string): Built {
   const c = seatContext(s, activeId);
   const slots = slotsOf(c);
-  const m = activePlayers(s).length;
-  let kind: 'steal' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'duel' | 'chaos' | 'book';
-  switch (die) {
-    case 1: kind = rand() < 0.6 ? 'steal' : 'swap'; break;
-    case 2: kind = 'shift'; break;
-    case 3: kind = rand() < 0.5 ? 'vault' : 'mijter'; break;
-    case 4: kind = 'duel'; break;
-    case 5: kind = 'reverse'; break;
-    default: kind = FEATURES.book ? 'book' : 'chaos';
-  }
+  const A = c.A.id;
 
-  if (kind === 'steal' || kind === 'swap') {
-    const mj = s.mijter && playerById(s, s.mijter) && !playerById(s, s.mijter)!.paused ? s.mijter : null;
-    let picked = pickTpl(s, `r3:${kind}`, kind === 'steal' ? R3_STEAL : R3_SWAP);
-    for (let i = 0; i < 8 && mj && picked.tpl.focus && slots[picked.tpl.focus] === mj; i++) {
-      picked = pickTpl({ ...s, decks: picked.decks }, `r3:${kind}`, kind === 'steal' ? R3_STEAL : R3_SWAP);
-    }
-    const { tpl, decks } = picked;
-    const focus = tpl.focus ? slots[tpl.focus] : undefined;
-    const task: Task = {
-      kind, emoji: kind === 'steal' ? '🦹' : '🔄', title: kind === 'steal' ? 'GERICHT STELEN' : 'GERICHT RUILEN',
-      main: rich(tpl.t, slots), highlight: [c.A.id, ...(focus ? [focus] : [])],
-    };
-    if (s.locks.length) task.sub = rich('Een cadeau op slot 🔒 is veilig en mag niet worden gestolen of geruild.');
-    return { task, effects: [], decks };
+  if (die === 1) {
+    const { text, decks } = pickStr(s, 'r3:steal', R3_STEAL);
+    const hl = [A, ...(text.includes('{L}') ? [c.L.id, c.R.id] : text.includes('{O}') ? [c.O.id] : [])];
+    return { task: { kind: 'steal', emoji: '🕵️', title: 'GEWOON STELEN', main: rich(text, slots), highlight: hl, foot: R3_FOOT }, effects: [], decks };
   }
-  if (kind === 'duel') {
-    const act = activePlayers(s).filter((p) => p.id !== c.A.id);
-    const noMj = act.filter((p) => p.id !== s.mijter);
-    const X = pick(noMj.length ? noMj : act.length ? act : [c.A]);
-    const { tpl, decks } = pickTpl(s, 'r3:duel', R_DUELS);
-    const sl = { A: c.A.id, X: X.id };
-    return {
-      task: { kind: 'duel', emoji: '⚔️', title: '1-TEGEN-1 DUEL', main: rich(tpl.t, sl), sub: rich(R3_DUEL_SUB), timerSec: tpl.timer ?? 10, highlight: [c.A.id, X.id] },
-      effects: [], decks,
-    };
-  }
-  if (kind === 'shift') {
-    const arrow: 'cw' | 'ccw' = rand() < 0.5 ? 'cw' : 'ccw';
-    const { tpl, decks } = pickTpl(s, 'r3:shift', R3_SHIFT);
-    const parts: string[] = [];
-    const sl: Record<string, string> = { A: c.A.id };
+  if (die === 2) {
+    const arrow: 'cw' | 'ccw' = s.direction === 1 ? 'cw' : 'ccw'; // met de huidige speelrichting mee
+    const { text, decks } = pickStr(s, 'r3:shift', R3_SHIFT);
+    const parts: string[] = [R3_SHIFT_SUB];
+    const sl: Record<string, string> = { A };
     const mj = s.mijter && playerById(s, s.mijter);
     if (mj && !mj.paused) { parts.push('🛡️ {M} heeft de Mijter en doet niet mee.'); sl.M = mj.id; }
-    if (s.locks.length) parts.push('🔒 Cadeaus op slot blijven liggen.');
+    if (s.locks.length) parts.push('🔒 Cadeaus in de Kluis blijven liggen.');
     return {
-      task: {
-        kind, emoji: '🔁', title: 'GROEPS-SCHUIF', arrow,
-        main: rich(tpl.t.replace('{DIR}', dirText(arrow === 'cw' ? 1 : -1)), sl),
-        sub: parts.length ? rich(parts.join(' '), sl) : undefined,
-        highlight: [c.A.id],
-      },
+      task: { kind: 'shift', emoji: '🔁', title: 'GROEPS-SCHUIF', arrow, main: rich(text.replace('{DIR}', dirText(arrow === 'cw' ? 1 : -1)), sl), sub: rich(parts.join(' '), sl), highlight: [A], foot: R3_FOOT },
       effects: [], decks,
     };
   }
-  if (kind === 'vault') {
-    const { text, decks } = pickStr(s, 'r3:vault', R3_VAULT);
-    const max = maxLocks(s);
-    const already = s.locks.includes(c.A.id);
-    let sub: Rich;
-    if (already) sub = rich('{A} had al een slotje 🔒 en mag het op een ander cadeau zetten.', { A: c.A.id });
-    else if (s.locks.length >= max) sub = rich('Alle slotjes zijn bezet: het slotje van {OLD} verhuist naar {A}!', { OLD: s.locks[0], A: c.A.id });
-    else sub = rich(`Slotjes in gebruik: ${s.locks.length + 1} van ${max}.`);
-    return { task: { kind, emoji: '🔒', title: 'DE KLUIS', main: rich(text, { A: c.A.id }), sub, highlight: [c.A.id] }, effects: [{ t: 'lock', id: c.A.id }], decks };
-  }
-  if (kind === 'mijter') {
+  if (die === 3) {
+    if (rand() < 0.5) {
+      const { text, decks } = pickStr(s, 'r3:vault', R3_VAULT);
+      const max = maxLocks(s);
+      const already = s.locks.includes(A);
+      let sub: Rich;
+      if (already) sub = rich('{A} had al een slotje 🔒 en mag het op een ander cadeau zetten.', { A });
+      else if (s.locks.length >= max) sub = rich('Alle slotjes zijn bezet: het slotje van {OLD} verhuist naar {A}!', { OLD: s.locks[0], A });
+      else sub = rich(`Slotjes in gebruik: ${s.locks.length + 1} van ${max}.`);
+      return { task: { kind: 'vault', emoji: '🔒', title: 'DE KLUIS', main: rich(text, { A }), sub, highlight: [A, ...(s.locks.length >= max && !already ? [s.locks[0]] : [])] }, effects: [{ t: 'lock', id: A }], decks };
+    }
     const { text, decks } = pickStr(s, 'r3:mijter', R3_MIJTER);
     let sub: Rich | undefined;
-    if (s.mijter && s.mijter !== c.A.id && playerById(s, s.mijter)) sub = rich('De Mijter verhuist van {OLD} naar {A}!', { OLD: s.mijter, A: c.A.id });
-    else if (s.mijter === c.A.id) sub = rich('Je had hem al! Hou hem maar vast.');
-    return { task: { kind, emoji: '🛡️', title: 'DE MIJTER', main: rich(text, { A: c.A.id }), sub, highlight: [c.A.id] }, effects: [{ t: 'mijter', id: c.A.id }], decks };
+    if (s.mijter && s.mijter !== A && playerById(s, s.mijter)) sub = rich('De Mijter verhuist van {OLD} naar {A}!', { OLD: s.mijter, A });
+    else if (s.mijter === A) sub = rich('Je had hem al! Hou hem maar vast.');
+    return { task: { kind: 'mijter', emoji: '🛡️', title: 'DE MIJTER', main: rich(text, { A }), sub, highlight: [A] }, effects: [{ t: 'mijter', id: A }], decks };
   }
-  if (kind === 'reverse') {
+  if (die === 4) return deckTask(s, c, 3);
+  if (die === 5) {
     const nd = (s.direction === 1 ? -1 : 1) as 1 | -1;
     const { text, decks } = pickStr(s, 'r3:reverse', R3_REVERSE);
-    const nId = nextActiveId(s, c.A.id, nd);
     return {
-      task: { kind, emoji: '🔄', title: 'RICHTING OMDRAAIEN', arrow: nd === 1 ? 'cw' : 'ccw', main: rich(text.replace('{DIR}', dirText(nd)), { A: c.A.id, N: nId }), highlight: [c.A.id, nId] },
+      task: { kind: 'reverse', emoji: '🔄', title: 'RICHTING OMDRAAIEN', arrow: nd === 1 ? 'cw' : 'ccw', main: rich(text.replace('{DIR}', dirText(nd)), slots), highlight: [A, c.L.id, c.R.id] },
       effects: [{ t: 'reverse' }], decks,
     };
   }
-  if (kind === 'chaos') {
-    const roll10 = randInt(10);
-    const v = roll10 < 4 ? 0 : roll10 < 6 ? 1 : roll10 < 8 ? 2 : 3; // 0 stoelen, 1 dubbele stoelen, 2 dubbele ruil, 3 bonus
-    const act = shuffle(activePlayers(s));
-    if (v === 0 && act.length >= 3) {
-      const P = c.A;
-      const Q = act.find((p) => p.id !== P.id)!;
-      const { text, decks } = pickStr(s, 'r3:chairs', R3_CHAIRS);
-      return {
-        task: { kind: 'chairs', emoji: '💺', title: 'CHAOS VAN PIET: STOELENDANS', main: rich(text, { P: P.id, Q: Q.id }), sub: rich('De namen wisselen mee in de zitkring. Een slotje 🔒 blijft bij het cadeau op de stoel.'), highlight: [P.id, Q.id] },
-        effects: [{ t: 'swap', a: P.id, b: Q.id }], decks,
-      };
-    }
-    if (v === 1 && act.length >= 5) {
-      const [P, Q, U, V] = act;
-      const { text, decks } = pickStr(s, 'r3:bigchairs', R3_BIGCHAIRS);
-      return {
-        task: { kind: 'chairs', emoji: '💥', title: 'CHAOS: STOELENDANS', main: rich(text, { P: P.id, Q: Q.id, U: U.id, V: V.id }), sub: rich('De namen wisselen mee in de zitkring. Een slotje 🔒 blijft bij het cadeau op de stoel.'), highlight: [P.id, Q.id, U.id, V.id] },
-        effects: [{ t: 'swap', a: P.id, b: Q.id }, { t: 'swap', a: U.id, b: V.id }], decks,
-      };
-    }
-    if (v === 3) {
-      const { text, decks } = pickStr(s, 'r3:bonus', R3_BONUS);
-      return {
-        task: { kind: 'bonus', emoji: '🎰', title: 'BONUS-BEURT', main: rich(text, slots), sub: s.locks.length ? rich('Een cadeau op slot 🔒 is veilig.') : undefined, highlight: [c.A.id] },
-        effects: [{ t: 'again' }], decks,
-      };
-    }
-    const { text, decks } = pickStr(s, 'r3:double', R3_DOUBLE);
-    return {
-      task: { kind: 'swap', emoji: '💥', title: 'CHAOS: DUBBELE RUIL', main: rich(text, slots), sub: s.locks.length ? rich('Een cadeau op slot 🔒 is veilig en mag niet worden geruild.') : undefined, highlight: [c.A.id] },
-      effects: [], decks,
-    };
+  if (!FEATURES.book) {
+    // Gooi 6: Chaos van Piet — Chaos-Deck van 6 kaarten
+    const { idx, decks } = drawDeck(s.decks, 'chaos', CHAOS.length);
+    const card = CHAOS[idx];
+    const others = activePlayers(s).filter((p) => p.id !== A);
+    const X = pick(others.length ? others : [c.A]);
+    const sl = { ...slots, X: X.id };
+    const effects: Effect[] = [];
+    let kind: TaskKind = 'chaos';
+    let hl = [A];
+    if (card.effect === 'SWAP_SEATS_TARGET') { effects.push({ t: 'swap', a: A, b: X.id }); kind = 'chairs'; hl = [A, X.id]; }
+    else if (card.effect === 'SWAP_SEATS_OPPOSITE') { effects.push({ t: 'swap', a: A, b: c.O.id }); kind = 'chairs'; hl = [A, c.O.id]; }
+    else if (card.effect === 'CLEAR_VAULTS') effects.push({ t: 'clearLocks' });
+    else if (card.effect === 'CLAIM_MITRE') effects.push({ t: 'mijter', id: A });
+    else if (card.t.includes('{X}')) hl = [A, X.id];
+    return { task: { kind, emoji: '⚡', title: `CHAOS VAN PIET: ${card.title}`, main: rich(card.t, sl), highlight: hl }, effects, decks };
   }
   // book
   const { card, fallback } = drawBook(s, c.A.name);
@@ -349,7 +301,7 @@ export function startRound1(s: GameState, now: number): GameState {
   return bump(s, {
     phase: 'round1', direction: 1, locks: [], mijter: null, turnCount: 0, decks: {}, r3: null, banner: null,
     book: { queue: shuffle(s.submissions.map((x) => x.id)), usedIds: [], lastTargets: [], fallback: { queue: [], last: null } },
-    turn: { activeId: first.id, stage: 'ready', die: null, rollMs: ROLL_MS, revealAt: 0, pending: null, task: null, resolvedAt: 0, timerEndsAt: null, timerDone: false, deadline: null, startedAt: now },
+    turn: { activeId: first.id, stage: 'ready', die: null, rollMs: ROLL_MS, revealAt: 0, pending: null, task: null, resolvedAt: 0, timerEndsAt: null, timerStartsAt: null, timerDone: false, deadline: null, startedAt: now },
   }, 'start');
 }
 
@@ -359,7 +311,7 @@ export function roll(s: GameState, now: number, forceDie?: number): GameState {
   const die = forceDie ?? 1 + randInt(6);
   const built = s.phase === 'round1' ? buildRound1(s, die, t.activeId) : s.phase === 'round2' ? buildRound2(s, die, t.activeId) : buildRound3(s, die, t.activeId);
   const rollMs = inTurbo(s, now) ? ROLL_TURBO_MS : ROLL_MS;
-  const turn: Turn = { ...t, stage: 'rolling', die, rollMs, revealAt: now + rollMs, pending: { task: built.task, effects: built.effects }, task: null, timerEndsAt: null, timerDone: false, deadline: null };
+  const turn: Turn = { ...t, stage: 'rolling', die, rollMs, revealAt: now + rollMs, pending: { task: built.task, effects: built.effects }, task: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, deadline: null };
   return bump(s, { turn, decks: built.decks, book: built.book ?? s.book }, 'dice');
 }
 
@@ -370,7 +322,8 @@ function applyEffects(s: GameState, effects: Effect[]): GameState {
       locks = [...locks.filter((x) => x !== e.id), e.id];
       const max = maxLocks(s);
       while (locks.length > max) locks = locks.slice(1);
-    } else if (e.t === 'mijter') mijter = e.id;
+    } else if (e.t === 'clearLocks') locks = [];
+    else if (e.t === 'mijter') mijter = e.id;
     else if (e.t === 'reverse') direction = direction === 1 ? -1 : 1;
     else if (e.t === 'swap') {
       const ia = players.findIndex((p) => p.id === e.a), ib = players.findIndex((p) => p.id === e.b);
@@ -389,14 +342,14 @@ function applyEffects(s: GameState, effects: Effect[]): GameState {
   return { ...s, players, locks, mijter, direction, book };
 }
 
-const FX_FOR: Partial<Record<TaskKind, FxName>> = { bonus: 'lock', book: 'drum', chairs: 'swap', vault: 'lock', mijter: 'mijter', shift: 'shift', reverse: 'reverse' };
+const FX_FOR: Partial<Record<TaskKind, FxName>> = { chaos: 'tension', book: 'drum', chairs: 'swap', vault: 'lock', mijter: 'mijter', shift: 'shift', reverse: 'reverse' };
 
 function resolveRoll(s: GameState, now: number): GameState {
   const t = s.turn!;
   const p = t.pending!;
   const task: Task = p.task.book ? { ...p.task, book: { ...p.task.book, drumUntil: now + DRUM_MS } } : p.task;
   const s2 = applyEffects(s, p.effects);
-  const turn: Turn = { ...t, again: p.effects.some((e) => e.t === 'again'), stage: 'task', pending: null, task, resolvedAt: now, timerEndsAt: task.timerSec ? now + task.timerSec * 1000 : null, timerDone: false };
+  const turn: Turn = { ...t, stage: 'task', pending: null, task, resolvedAt: now, timerEndsAt: null, timerStartsAt: null, timerDone: false };
   return bump(s2, { turn }, FX_FOR[task.kind] ?? 'reveal');
 }
 
@@ -428,6 +381,15 @@ export function revealBook(s: GameState, now: number): GameState {
   return bump(s, { turn: { ...t, task } }, 'bookreveal');
 }
 
+export const COUNTDOWN_MS = 3000;
+
+/** Host tikt "Start klok": eerst "Klaar? 3... 2... 1... GO!", daarna loopt de timer van de opdracht. */
+export function startTimer(s: GameState, now: number): GameState {
+  const t = s.turn;
+  if (!t || t.stage !== 'task' || !t.task?.timerSec || t.timerEndsAt) return s;
+  return bump(s, { turn: { ...t, timerStartsAt: now + COUNTDOWN_MS, timerEndsAt: now + COUNTDOWN_MS + t.task.timerSec * 1000 } }, 'next');
+}
+
 export function canNext(s: GameState, now: number): boolean {
   const t = s.turn;
   if (!t || t.stage !== 'task' || !t.task) return false;
@@ -438,9 +400,9 @@ export function canNext(s: GameState, now: number): boolean {
 
 export function next(s: GameState, now: number): GameState {
   if (!canNext(s, now) || !s.turn) return s;
-  const id = s.turn.again ? s.turn.activeId : nextActiveId(s, s.turn.activeId);
+  const id = nextActiveId(s, s.turn.activeId);
   const turn: Turn = {
-    ...s.turn, again: false, activeId: id, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerDone: false,
+    ...s.turn, activeId: id, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false,
     resolvedAt: 0, startedAt: now, deadline: inTension(s, now) ? now + TURN_LIMIT_MS : null,
   };
   return bump(s, { turn, turnCount: s.turnCount + 1 }, 'next');
@@ -450,7 +412,7 @@ export function next(s: GameState, now: number): GameState {
 export function startRound2(s: GameState, now: number): GameState {
   if (s.phase !== 'round1' || !s.turn || s.turn.stage === 'rolling') return s;
   const activeId = s.turn.stage === 'task' ? nextActiveId(s, s.turn.activeId, 1) : s.turn.activeId;
-  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: null };
+  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: null };
   return bump(s, { phase: 'round2', turn, banner: { text: 'RONDE 2: PAK ALLE CADEAUS UIT!', until: now + 5000 } }, 'round2');
 }
 
@@ -468,7 +430,7 @@ export function startRound3(s: GameState, now: number): GameState {
   const activeId = s.turn.stage === 'task' ? nextActiveId(s, s.turn.activeId, 1) : s.turn.activeId;
   const r3 = { startAt: now, endAt, falseAlarmAt: Math.min(falseAlarmAt, endAt - 20_000), falseAlarmDone: false, tensionStarted: false };
   const s2: GameState = { ...s, phase: 'round3', direction: 1, r3 };
-  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: inTension(s2, now) ? now + TURN_LIMIT_MS : null };
+  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: inTension(s2, now) ? now + TURN_LIMIT_MS : null };
   return bump(s2, { turn, banner: { text: 'RONDE 3: DE GROTE FINALE!', until: now + 5000 } }, 'round2');
 }
 

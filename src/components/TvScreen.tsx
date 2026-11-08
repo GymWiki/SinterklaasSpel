@@ -5,6 +5,7 @@ import { Dice } from './Dice';
 import { RichText } from './Rich';
 import { Confetti } from './Confetti';
 import { QR } from './QR';
+import { Legend } from './Legend';
 import { FEATURES } from '@/lib/features';
 import { inTension, inTurbo, playerById } from '@/game/engine';
 import { sfx } from '@/game/sound';
@@ -36,6 +37,12 @@ function TimerRing({ left, total }: { left: number; total: number }) {
       <span>{Math.max(0, Math.ceil(left))}</span>
     </div>
   );
+}
+
+/** Lange opdrachten (deck) krijgen automatisch een kleinere letter zodat alles op het scherm past. */
+function textSize(task: Task) {
+  const len = task.main.tpl.length + (task.sub?.tpl.length ?? 0) * 0.5;
+  return len > 210 ? 3.1 : len > 160 ? 3.5 : len > 115 ? 4.1 : len > 80 ? 4.6 : 4.9;
 }
 
 function BookOverlay({ s, task, now }: { s: GameState; task: Task; now: number }) {
@@ -109,7 +116,11 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
   };
 
   const deadlineLeft = t?.stage === 'ready' && t.deadline ? (t.deadline - now) / 1000 : null;
-  const timerLeft = t?.stage === 'task' && t.timerEndsAt && !t.timerDone ? (t.timerEndsAt - now) / 1000 : null;
+  const counting = !!(t?.stage === 'task' && t.timerStartsAt && now < t.timerStartsAt);
+  const timerLeft = t?.stage === 'task' && t.timerEndsAt && !t.timerDone && !counting ? (t.timerEndsAt - now) / 1000 : null;
+  const goFlash = !!(t?.stage === 'task' && t.timerStartsAt && now >= t.timerStartsAt && now < t.timerStartsAt + 900);
+  const showLegend = s.phase === 'round1' || s.phase === 'round2' || s.phase === 'round3';
+  const legendDie = t?.stage === 'task' ? t.die : null; // pas oplichten als de dobbelsteen stilligt
   const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'round2' ? 'Ronde 2 · Uitpakken & Kijken' : s.phase === 'round3' ? (tension ? 'Ronde 3 · De ontknoping!' : 'Ronde 3 · De Grote Finale') : s.phase === 'finished' ? 'Einde!' : 'Pakjesavond Live';
 
   return (
@@ -124,7 +135,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
         </div>
       </header>
 
-      <main className="tv-main">
+      <main className={`tv-main ${showLegend ? 'with-legend' : ''}`}>
+        {showLegend && <Legend phase={s.phase} die={legendDie} />}
         <section className="tv-ring">
           <Ring players={s.players} activeId={s.phase === 'lobby' || s.phase === 'finished' ? null : t?.activeId} locks={s.locks} mijter={s.mijter} highlight={task?.highlight ?? []} targetId={task?.book?.targetId} direction={s.direction} arrow={task?.arrow}>
             {s.phase === 'lobby' ? <div className="center-logo">🎁</div> : s.phase === 'finished' ? <div className="center-logo">🚢</div> : <Dice value={t?.die ?? null} rolling={rolling} ms={t?.rollMs} idle />}
@@ -150,7 +162,7 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
           )}
 
           {(s.phase === 'round1' || s.phase === 'round2' || s.phase === 'round3') && t && active && (
-            <div className="panel-turn">
+            <div className={`panel-turn ${task && textSize(task) < 4.2 ? 'compact' : ''}`}>
               {s.phase !== 'round3' && <div className="goal">🎯 {s.phase === 'round1' ? 'Ronde 1: verdeel alle cadeaus van de stapel' : 'Ronde 2: Pak alle cadeaus uit!'}</div>}
               <div className="turn-who" style={{ color: active.color }}>
                 <span>{active.icon}</span> {active.name}
@@ -165,9 +177,12 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
               {t.stage === 'task' && task && !task.book && (
                 <div className="task">
                   <div className="task-tag">{task.emoji} {task.title}</div>
-                  <div className="task-main"><RichText rich={task.main} players={s.players} /></div>
-                  {task.sub && <div className="task-sub"><RichText rich={task.sub} players={s.players} /></div>}
-                  {timerLeft !== null && task.timerSec && <TimerRing left={timerLeft} total={task.timerSec} />}
+                  <div className="task-main" style={{ fontSize: `${textSize(task)}vmin` }}><RichText rich={task.main} players={s.players} /></div>
+                  {task.sub && <div className="task-sub" style={{ fontSize: `${Math.min(2.8, textSize(task) * 0.6)}vmin` }}><RichText rich={task.sub} players={s.players} /></div>}
+                  {task.timerSec && !t.timerEndsAt && <div className="clock-wait">⏱️ {task.timerSec} seconden · lees de opdracht rustig mee</div>}
+                  {counting && t.timerStartsAt && <div className="countdown">Klaar? {Math.ceil((t.timerStartsAt - now) / 1000)}...</div>}
+                  {goFlash && <div className="countdown go">GO!</div>}
+                  {timerLeft !== null && !goFlash && task.timerSec && <TimerRing left={timerLeft} total={task.timerSec} />}
                   {t.timerDone && task.timerSec && <div className="timeup">⏰ Tijd is om!</div>}
                 </div>
               )}
@@ -176,6 +191,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
           )}
         </section>
       </main>
+
+      <footer className="tv-foot">{t?.stage === 'task' && task?.foot ? task.foot : ''}</footer>
 
       {t?.stage === 'task' && task?.book && s.phase !== 'finished' && <BookOverlay s={s} task={task} now={now} />}
 

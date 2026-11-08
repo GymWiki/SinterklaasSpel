@@ -26,7 +26,7 @@ export interface Rich {
 
 export type TaskKind =
   | 'unwrap' | 'give' | 'neighbor' | 'opposite' | 'mini' | 'bonus' | 'party'
-  | 'steal' | 'duel' | 'balance' | 'bonus' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
+  | 'steal' | 'deck' | 'balance' | 'chaos' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
 
 export interface BookCard {
   id: string;
@@ -44,6 +44,8 @@ export interface Task {
   main: Rich;
   sub?: Rich;
   timerSec?: number;
+  /** vaste herinnering onderaan het TV-scherm */
+  foot?: string;
   arrow?: 'cw' | 'ccw';
   highlight?: string[];
   book?: {
@@ -59,7 +61,7 @@ export type Effect =
   | { t: 'lock'; id: string }
   | { t: 'mijter'; id: string }
   | { t: 'reverse' }
-  | { t: 'again' }
+  | { t: 'clearLocks' }
   | { t: 'swap'; a: string; b: string }
   | { t: 'book'; cardId: string; source: 'submission' | 'builtin'; target: string | null };
 
@@ -77,8 +79,8 @@ export interface Turn {
   /** "Schiet-op-Piet" deadline voor de worp (alleen in de ontknoping) */
   deadline: number | null;
   startedAt: number;
-  /** bonus-beurt: dezelfde speler gooit nog een keer */
-  again?: boolean;
+  /** de klok van een deck-opdracht start pas na "Start klok" (met 3-2-1 aftelling) */
+  timerStartsAt?: number | null;
 }
 
 export interface DeckState {

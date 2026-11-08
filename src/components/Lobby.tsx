@@ -146,7 +146,7 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
 
       <section className="card start-card">
         {!canStart(s) && <p className="err">Minimaal 3 spelers die niet op pauze staan.</p>}
-        <button className="btn primary huge" disabled={!canStart(s)} onClick={() => update(startRound1)}>🎅 Start Ronde 1: de Uitpakronde</button>
+        <button className="btn primary huge" disabled={!canStart(s)} onClick={() => update(startRound1)}>🎅 Start Ronde 1: de Verdeelronde</button>
         <button
           className="linkbtn"
           onClick={() => {

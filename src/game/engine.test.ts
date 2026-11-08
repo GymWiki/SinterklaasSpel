@@ -50,11 +50,40 @@ test('ronde 1: gooi -> taak -> volgende; dubbelklik wordt genegeerd', () => {
   assert.equal(c.turn!.activeId, s.players[1].id);
 });
 
-test('mini-opdracht start timer', () => {
+test('ronde 1: 6 vaste uitkomsten met pijlen bij 2 (links) en 4 (rechts)', () => {
+  const s0 = E.startRound1(E.createState('X', names, []), 0);
+  const kinds: Record<number, string> = { 1: 'unwrap', 2: 'shift', 3: 'steal', 4: 'shift', 5: 'give', 6: 'party' };
+  for (let die = 1; die <= 6; die++) {
+    const r = play(s0, 0, die);
+    const t = r.s.turn!.task!;
+    assert.equal(t.kind, kinds[die]);
+    assert.equal(t.arrow, die === 2 ? 'cw' : die === 4 ? 'ccw' : undefined);
+    assert.equal(t.timerSec, undefined);
+  }
+  assert.match(play(s0, 0, 1).s.turn!.task!.main.tpl, /NOG NIET uit/);
+  assert.match(play(s0, 0, 3).s.turn!.task!.sub!.tpl, /zonder uit te pakken/);
+  assert.match(play(s0, 0, 5).s.turn!.task!.sub!.tpl, /gaat de beurt naar de volgende persoon/);
+});
+
+test('jongste speler begint; zonder keuze begint de host', () => {
+  let s = E.createState('X', names, []);
+  assert.equal(E.startRound1(s, 0).turn!.activeId, s.players[0].id);
+  s = E.setYoungest(s, s.players[3].id);
+  assert.equal(E.startRound1(s, 0).turn!.activeId, s.players[3].id);
+  assert.equal(E.setYoungest(s, s.players[3].id).youngestId, null); // nogmaals tikken = uit
+  const s2 = E.startRound1(s, 0);
+  assert.equal(E.setYoungest(s2, s2.players[1].id), s2); // alleen in de lobby
+});
+
+test('uitpak-moment tussen ronde 1 en 2: klok start pas daarna', () => {
   let s = E.startRound1(E.createState('X', names, []), 0);
-  const r = play(s, 0, 4);
-  assert.ok(r.s.turn!.task!.timerSec! >= 10);
-  assert.ok(r.s.turn!.timerEndsAt);
+  s = E.startUnwrap(s, 1000);
+  assert.equal(s.phase, 'unwrap');
+  assert.equal(s.r2, null);
+  assert.equal(E.roll(s, 1100), s);
+  s = E.startRound2(s, 5000);
+  assert.equal(s.phase, 'round2');
+  assert.ok(s.r2!.startAt === 5000);
 });
 
 test('slotjes schalen mee en verhuizen', () => {

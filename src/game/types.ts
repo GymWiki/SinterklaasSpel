@@ -16,7 +16,7 @@ export interface Submission {
   content: string;
 }
 
-export type Phase = 'lobby' | 'round1' | 'round2' | 'finished';
+export type Phase = 'lobby' | 'round1' | 'unwrap' | 'round2' | 'finished';
 
 /** Tekst met tokens ({A}, {L}...) + welke speler bij welk token hoort. */
 export interface Rich {
@@ -25,7 +25,7 @@ export interface Rich {
 }
 
 export type TaskKind =
-  | 'unwrap' | 'neighbor' | 'opposite' | 'mini' | 'bonus' | 'party'
+  | 'unwrap' | 'give' | 'neighbor' | 'opposite' | 'mini' | 'bonus' | 'party'
   | 'steal' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
 
 export interface BookCard {
@@ -100,6 +100,8 @@ export interface GameState {
   turn: Turn | null;
   turnCount: number;
   decks: Record<string, DeckState>;
+  /** jongste speler: begint met dobbelen in Ronde 1 */
+  youngestId?: string | null;
   book: { queue: string[]; usedIds: string[]; lastTargets: string[]; fallback: DeckState };
   r2: { startAt: number; endAt: number; falseAlarmAt: number; falseAlarmDone: boolean; tensionStarted: boolean } | null;
   banner: { text: string; until: number } | null;

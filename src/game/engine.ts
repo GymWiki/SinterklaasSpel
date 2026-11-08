@@ -6,7 +6,7 @@
  * (gezien vanaf je stoel, gezicht naar het midden); de vorige index zit rechts.
  */
 import { forAudience, type Audience } from '@/content/tags';
-import { R1, R1_DIE, R1_FALLBACK, R1_META, R1_MINI_SUB, type R1Kind, type TaskTpl } from '@/content/round1';
+import { R1_FIXED, type TaskTpl } from '@/content/round1';
 import { R2_CHAIRS, R2_MIJTER, R2_REVERSE, R2_SHIFT, R2_STEAL, R2_SWAP, R2_VAULT } from '@/content/round2';
 import { BOOK_FALLBACK, BOOK_FALLBACK_REVEAL } from '@/content/book';
 import { GENERAL_TARGET } from '@/lib/constants';
@@ -59,7 +59,7 @@ export function createState(roomId: string, names: string[], submissions: Submis
     v: 1, rev: 1, roomId, isDemo, phase: 'lobby',
     settings: { audience: 'mixed', r2Minutes: 30 },
     players, submissions, removedIds: [], loadedAt: Date.now(),
-    direction: 1, locks: [], mijter: null, turn: null, turnCount: 0, decks: {},
+    direction: 1, locks: [], mijter: null, turn: null, turnCount: 0, decks: {}, youngestId: null,
     book: { queue: [], usedIds: [], lastTargets: [], fallback: { queue: [], last: null } },
     r2: null, banner: null, fx: null,
   };
@@ -158,20 +158,13 @@ function slotsOf(c: ReturnType<typeof seatContext>): Record<string, string> {
 }
 
 function buildRound1(s: GameState, die: number, activeId: string): Built {
-  const kind = R1_DIE[die] as R1Kind;
   const c = seatContext(s, activeId);
-  const { tpl, decks } = pickTpl(s, `r1:${kind}`, R1[kind]);
-  const slots = slotsOf(c);
-  const focus = tpl.focus ? slots[tpl.focus] : undefined;
+  const f = R1_FIXED[die];
   const task: Task = {
-    kind: kind as TaskKind, ...R1_META[kind],
-    main: rich(tpl.t, slots),
-    timerSec: tpl.timer,
-    highlight: [c.A.id, ...(focus ? [focus] : [])],
+    kind: f.kind, title: f.title, emoji: f.emoji, main: rich(f.main, slotsOf(c)),
+    sub: f.sub ? rich(f.sub) : undefined, arrow: f.arrow, highlight: [c.A.id],
   };
-  if (kind === 'neighbor' || kind === 'opposite') task.sub = rich(R1_FALLBACK);
-  if (kind === 'mini') task.sub = rich(R1_MINI_SUB);
-  return { task, effects: [], decks };
+  return { task, effects: [], decks: s.decks };
 }
 
 const dirText = (d: 1 | -1) => (d === 1 ? 'met de klok mee' : 'tegen de klok in');
@@ -279,7 +272,8 @@ export function canStart(s: GameState) {
 
 export function startRound1(s: GameState, now: number): GameState {
   if (s.phase !== 'lobby' || !canStart(s)) return s;
-  const first = activePlayers(s)[0];
+  const young = s.players.find((p) => p.id === s.youngestId && !p.paused);
+  const first = young ?? activePlayers(s)[0];
   return bump(s, {
     phase: 'round1', direction: 1, locks: [], mijter: null, turnCount: 0, decks: {}, r2: null, banner: null,
     book: { queue: shuffle(s.submissions.map((x) => x.id)), usedIds: [], lastTargets: [], fallback: { queue: [], last: null } },
@@ -380,8 +374,22 @@ export function next(s: GameState, now: number): GameState {
   return bump(s, { turn, turnCount: s.turnCount + 1 }, 'next');
 }
 
-export function startRound2(s: GameState, now: number): GameState {
+/** Einde Ronde 1: eerst een gezamenlijk uitpak-moment (de geheime klok van Ronde 2 start nog niet). */
+export function startUnwrap(s: GameState, now: number): GameState {
   if (s.phase !== 'round1' || !s.turn || s.turn.stage === 'rolling') return s;
+  const activeId = s.turn.stage === 'task' ? nextActiveId(s, s.turn.activeId, 1) : s.turn.activeId;
+  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: null };
+  return bump(s, { phase: 'unwrap', turn }, 'start');
+}
+
+export function setYoungest(s: GameState, id: string | null): GameState {
+  if (s.phase !== 'lobby') return s;
+  const next = s.youngestId === id ? null : id;
+  return bump(s, { youngestId: next });
+}
+
+export function startRound2(s: GameState, now: number): GameState {
+  if ((s.phase !== 'round1' && s.phase !== 'unwrap') || !s.turn || s.turn.stage === 'rolling') return s;
   const nominal = s.settings.r2Minutes * 60_000;
   const endAt = now + Math.round(nominal * (0.87 + rand() * 0.26)); // geheim: ±13% rond de ingestelde tijd
   const falseAlarmAt = Math.max(now + 45_000, endAt - (50_000 + randInt(50_000)));

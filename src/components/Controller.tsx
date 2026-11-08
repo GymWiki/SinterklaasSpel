@@ -4,13 +4,13 @@ import { Ring } from './Ring';
 import { Dice } from './Dice';
 import { RichText } from './Rich';
 import { PlayersPanel } from './PlayersPanel';
-import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2 } from '@/game/engine';
+import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2, startUnwrap } from '@/game/engine';
 import type { GameState } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
 
 export function Controller({ state: s, update, now }: { state: GameState; update: Upd; now: number }) {
-  const [armed, setArmed] = useState<'' | 'r2' | 'reset'>('');
+  const [armed, setArmed] = useState<'' | 'r2' | 'unwrap' | 'reset'>('');
   const [panel, setPanel] = useState(false);
   useEffect(() => {
     if (!armed) return;
@@ -37,6 +37,21 @@ export function Controller({ state: s, update, now }: { state: GameState; update
           <p>De stoomboot is aangekomen. Het spel is afgelopen. Fijne pakjesavond!</p>
           <button className={`btn big ${armed === 'reset' ? 'danger' : 'primary'}`} onClick={() => (armed === 'reset' ? (setArmed(''), update(resetToLobby)) : setArmed('reset'))}>
             {armed === 'reset' ? 'Zeker weten? Tik nogmaals' : '↩️ Terug naar de lobby (nieuw spel)'}
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  if (s.phase === 'unwrap') {
+    return (
+      <div className="stack">
+        <section className="card stop-card">
+          <div className="stop-ic">🎁🎉</div>
+          <h1>Uitpak-moment!</h1>
+          <p>Iedereen pakt nu alle nog ingepakte cadeaus uit. De geheime klok van Ronde 2 start pas als je hieronder tikt.</p>
+          <button className={`btn big ${armed === 'r2' ? 'danger' : 'primary'}`} onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}>
+            {armed === 'r2' ? 'Zeker weten? Tik nogmaals om te starten!' : 'Iedereen heeft uitgepakt → Start de Finale (Ronde 2)'}
           </button>
         </section>
       </div>
@@ -96,11 +111,11 @@ export function Controller({ state: s, update, now }: { state: GameState; update
       {s.phase === 'round1' && (
         <section className="card">
           <button
-            className={`btn big ${armed === 'r2' ? 'danger' : 'ghost'}`}
+            className={`btn big ${armed === 'unwrap' ? 'danger' : 'ghost'}`}
             disabled={t.stage === 'rolling'}
-            onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}
+            onClick={() => (armed === 'unwrap' ? (setArmed(''), update(startUnwrap)) : setArmed('unwrap'))}
           >
-            {armed === 'r2' ? 'Zeker weten? Tik nogmaals om te starten!' : 'Alle cadeaus zijn uitgepakt → Start de Finale (Ronde 2)'}
+            {armed === 'unwrap' ? 'Zeker weten? Tik nogmaals!' : 'Alle cadeaus zijn verdeeld → Start Ronde 2'}
           </button>
         </section>
       )}

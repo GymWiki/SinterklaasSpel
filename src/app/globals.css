@@ -194,8 +194,8 @@ a { color: inherit; }
 .ring-line.cw ellipse { animation: dash-cw 6s linear infinite; }
 .ring-line.ccw ellipse { animation: dash-ccw 6s linear infinite; }
 .ring-line.bold ellipse { stroke: var(--gold); stroke-width: 8; stroke-dasharray: 3 3; animation-duration: 2.2s; }
-.ring-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 46cqmin; height: 46cqmin; }
-.ring-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 50cqmin; color: var(--gold); opacity: 0.25; pointer-events: none; animation: spin 6s linear infinite; }
+.ring-center { z-index: 3; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 46cqmin; height: 46cqmin; }
+.ring-arrow { z-index: 1; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 50cqmin; color: var(--gold); opacity: 0.25; pointer-events: none; animation: spin 6s linear infinite; }
 .center-logo { font-size: 28cqmin; }
 .seat {
   position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 0.8cqmin;

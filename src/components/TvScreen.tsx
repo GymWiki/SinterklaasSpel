@@ -109,7 +109,7 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
 
   const deadlineLeft = t?.stage === 'ready' && t.deadline ? (t.deadline - now) / 1000 : null;
   const timerLeft = t?.stage === 'task' && t.timerEndsAt && !t.timerDone ? (t.timerEndsAt - now) / 1000 : null;
-  const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Uitpakken' : s.phase === 'round2' ? (tension ? 'Ronde 2 · De ontknoping!' : 'Ronde 2 · De Finale') : s.phase === 'finished' ? 'Einde!' : 'Pakjesavond Live';
+  const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'unwrap' ? 'Uitpak-moment!' : s.phase === 'round2' ? (tension ? 'Ronde 2 · De ontknoping!' : 'Ronde 2 · De Finale') : s.phase === 'finished' ? 'Einde!' : 'Pakjesavond Live';
 
   return (
     <div className={`tv ${tension ? 'tension' : ''} ${turbo ? 'turbo' : ''}`}>
@@ -125,8 +125,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
 
       <main className="tv-main">
         <section className="tv-ring">
-          <Ring players={s.players} activeId={s.phase === 'lobby' || s.phase === 'finished' ? null : t?.activeId} locks={s.locks} mijter={s.mijter} highlight={task?.highlight ?? []} targetId={task?.book?.targetId} direction={s.direction} arrow={task?.arrow}>
-            {s.phase === 'lobby' ? <div className="center-logo">🎁</div> : s.phase === 'finished' ? <div className="center-logo">🚢</div> : <Dice value={t?.die ?? null} rolling={rolling} ms={t?.rollMs} idle />}
+          <Ring players={s.players} activeId={s.phase === 'lobby' || s.phase === 'unwrap' || s.phase === 'finished' ? null : t?.activeId} locks={s.locks} mijter={s.mijter} highlight={task?.highlight ?? []} targetId={task?.book?.targetId} direction={s.direction} arrow={task?.arrow}>
+            {s.phase === 'lobby' || s.phase === 'unwrap' ? <div className="center-logo">🎁</div> : s.phase === 'finished' ? <div className="center-logo">🚢</div> : <Dice value={t?.die ?? null} rolling={rolling} ms={t?.rollMs} idle />}
           </Ring>
         </section>
 
@@ -145,6 +145,14 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
                 </div>
               )}
               <p className="small">De host zet de zitkring klaar en start het spel.</p>
+            </div>
+          )}
+
+          {s.phase === 'unwrap' && (
+            <div className="panel-lobby">
+              <h1>🎉 Uitpak-moment!</h1>
+              <p className="big">Iedereen pakt nu <b>alle ingepakte cadeaus</b> uit!</p>
+              <p className="small">Daarna start de grote finale met de stoomboot. Wanneer die aankomt? Dat weet alleen Sinterklaas...</p>
             </div>
           )}
 
@@ -176,6 +184,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
       </main>
 
       {t?.stage === 'task' && task?.book && s.phase !== 'finished' && <BookOverlay s={s} task={task} now={now} />}
+
+      {s.phase === 'unwrap' && <Confetti />}
 
       {s.banner && now <= s.banner.until && <div className="banner">{s.banner.text}</div>}
 

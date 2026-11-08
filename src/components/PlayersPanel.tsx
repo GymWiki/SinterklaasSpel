@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { addPlayer, movePlayer, removePlayer, setPaused, setYoungest } from '@/game/engine';
+import { addPlayer, addPlayers, movePlayer, removePlayer, setPaused, setYoungest } from '@/game/engine';
 import type { GameState } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
@@ -10,6 +10,8 @@ export function PlayersPanel({ state: s, update }: { state: GameState; update: U
   const [drag, setDrag] = useState<number | null>(null);
   const [over, setOver] = useState<number | null>(null);
   const [name, setName] = useState('');
+  const [bulk, setBulk] = useState('');
+  const [showBulk, setShowBulk] = useState(false);
   const lobby = s.phase === 'lobby';
   const n = s.players.length;
 
@@ -44,6 +46,17 @@ export function PlayersPanel({ state: s, update }: { state: GameState; update: U
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nieuwe speler toevoegen" maxLength={24} />
         <button className="btn">＋</button>
       </form>
+      {lobby && (
+        <>
+          <button type="button" className="linkbtn" onClick={() => setShowBulk((v) => !v)}>{showBulk ? 'Verberg' : '📋 Veel namen tegelijk plakken (klas)'}</button>
+          {showBulk && (
+            <div className="stack">
+              <textarea className="input area" rows={5} value={bulk} onChange={(e) => setBulk(e.target.value)} placeholder={'Eén naam per regel (of gescheiden door komma)\nbijv.\nAnna\nBram\nChloé'} />
+              <button className="btn gold" disabled={!bulk.trim()} onClick={() => { update((st) => addPlayers(st, bulk)); setBulk(''); setShowBulk(false); }}>＋ Namen toevoegen</button>
+            </div>
+          )}
+        </>
+      )}
       {lobby && <p className="hint">🍼 Tik op de jongste speler: die begint met dobbelen in Ronde 1{s.youngestId ? '' : ' (nu nog niet gekozen: de host begint)'}.</p>}
       <p className="hint">Volgorde = met de klok mee, beginnend bij de host onderaan (6 uur). ⏸️ = tijdelijk overslaan.</p>
     </div>

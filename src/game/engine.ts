@@ -24,6 +24,11 @@ export const COLORS = [
 export const ICONS = ['🎅', '🤶', '🧝', '🦌', '⛄', '🎁', '🍪', '🥜', '🎄', '⭐', '🚢', '👑', '🐴', '🔔', '🍬', '🧦'];
 
 export const TURN_LIMIT_MS = 20_000;
+export const TURN_LIMIT_CLASS_MS = 15_000;
+export const ROLL_CLASS_MS = 1200;
+export const ROLL_CLASS_TURBO_MS = 500;
+/** Klassikale Modus: elke 4e beurt een automatische massale Klasse-Schuif. */
+export const CLASS_SHIFT_EVERY = 4;
 export const TENSION_MS = 5 * 60_000;
 export const TURBO_MS = 2 * 60_000;
 export const ROLL_MS = 1800;
@@ -75,6 +80,8 @@ const bump = (s: GameState, patch: Partial<GameState>, fx?: FxName): GameState =
 
 /* ---------- zitkring ---------- */
 
+export const isClass = (s: GameState) => s.settings.mode === 'class';
+export const turnLimit = (s: GameState) => (isClass(s) ? TURN_LIMIT_CLASS_MS : TURN_LIMIT_MS);
 export const activePlayers = (s: GameState) => s.players.filter((p) => !p.paused);
 export const playerById = (s: GameState, id: string | null | undefined) => s.players.find((p) => p.id === id);
 export const maxLocks = (s: GameState) => Math.max(1, Math.floor(activePlayers(s).length / 3));
@@ -175,8 +182,10 @@ const tokensIn = (t: string) => Array.from(new Set(Array.from(t.matchAll(/\{([AL
 
 /** Trek 1 kaart uit het Opdrachten-Deck (ronde 2 & 3 delen één Smart Deck: geen herhaling). */
 function deckTask(s: GameState, c: ReturnType<typeof seatContext>, round: 2 | 3): Built {
-  const { idx, decks } = drawDeck(s.decks, 'deck', DECK.length);
-  const card = DECK[idx];
+  // Klassikaal: geen lange pingpong-duels (30 sec), die houden de klas te lang stil
+  const list = isClass(s) ? DECK.filter((d) => d.cat !== 'pingpong') : DECK;
+  const { idx, decks } = drawDeck(s.decks, isClass(s) ? 'deck:class' : 'deck', list.length);
+  const card = list[idx];
   const others = activePlayers(s).filter((p) => p.id !== c.A.id);
   const pool = round === 3 ? others.filter((p) => p.id !== s.mijter) : others; // de Mijter is immuun voor stelen
   const X = pick(pool.length ? pool : others.length ? others : [c.A]);
@@ -310,9 +319,9 @@ export function roll(s: GameState, now: number, forceDie?: number): GameState {
   if ((s.phase !== 'round1' && s.phase !== 'round2' && s.phase !== 'round3') || !t || t.stage !== 'ready') return s;
   const die = forceDie ?? 1 + randInt(6);
   const built = s.phase === 'round1' ? buildRound1(s, die, t.activeId) : s.phase === 'round2' ? buildRound2(s, die, t.activeId) : buildRound3(s, die, t.activeId);
-  const rollMs = inTurbo(s, now) ? ROLL_TURBO_MS : ROLL_MS;
+  const rollMs = isClass(s) ? (inTurbo(s, now) ? ROLL_CLASS_TURBO_MS : ROLL_CLASS_MS) : inTurbo(s, now) ? ROLL_TURBO_MS : ROLL_MS;
   const turn: Turn = { ...t, stage: 'rolling', die, rollMs, revealAt: now + rollMs, pending: { task: built.task, effects: built.effects }, task: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, deadline: null };
-  return bump(s, { turn, decks: built.decks, book: built.book ?? s.book }, rollMs === ROLL_TURBO_MS ? 'diceFast' : 'dice');
+  return bump(s, { turn, decks: built.decks, book: built.book ?? s.book }, rollMs <= ROLL_TURBO_MS ? 'diceFast' : 'dice');
 }
 
 function applyEffects(s: GameState, effects: Effect[]): GameState {
@@ -406,14 +415,41 @@ export function canNext(s: GameState, now: number): boolean {
   return true;
 }
 
+/** Massale Klasse-Schuif (Klassikale Modus): iedereen geeft tegelijk een cadeau door. Geen worp nodig. */
+function classShiftBuilt(s: GameState, activeId: string): Built {
+  if (s.phase === 'round3') {
+    const b = buildRound3(s, 2, activeId); // groeps-schuif met kleinste/grootste/keuze, Mijter en Kluis
+    return { ...b, task: { ...b.task, kind: 'classshift', title: 'KLASSE-SCHUIF!', emoji: '📣' } };
+  }
+  const arrow: 'cw' | 'ccw' = rand() < 0.5 ? 'cw' : 'ccw';
+  const dir = arrow === 'cw' ? 1 : -1;
+  return {
+    task: {
+      kind: 'classshift', emoji: '📣', title: 'KLASSE-SCHUIF!', arrow,
+      main: rich(`Iedereen geeft nu TEGELIJK één cadeau door aan de buurman ${dirText(dir)}!`),
+      sub: rich('Wie geen cadeau heeft, geeft niets door maar ontvangt wel. Daarna gaat het spel verder.'), highlight: [],
+    },
+    effects: [], decks: s.decks,
+  };
+}
+
 export function next(s: GameState, now: number): GameState {
   if (!canNext(s, now) || !s.turn) return s;
-  const id = nextActiveId(s, s.turn.activeId);
+  // na een Klasse-Schuif is dezelfde speler gewoon aan de beurt (de schuif telt niet als beurt)
+  const id = s.turn.task?.kind === 'classshift' ? s.turn.activeId : nextActiveId(s, s.turn.activeId);
+  const newCount = s.turn.task?.kind === 'classshift' ? s.turnCount : s.turnCount + 1;
+  if (isClass(s) && s.turn.task?.kind !== 'classshift' && newCount % CLASS_SHIFT_EVERY === 0 && (s.phase === 'round1' || s.phase === 'round2' || s.phase === 'round3')) {
+    const b = classShiftBuilt(s, id);
+    const turn: Turn = {
+      ...s.turn, activeId: id, stage: 'task', die: null, pending: null, task: b.task, resolvedAt: now, timerEndsAt: null, timerStartsAt: null, timerDone: false, startedAt: now, deadline: null,
+    };
+    return bump(s, { turn, turnCount: newCount, decks: b.decks }, 'shift');
+  }
   const turn: Turn = {
     ...s.turn, activeId: id, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false,
-    resolvedAt: 0, startedAt: now, deadline: inTension(s, now) ? now + TURN_LIMIT_MS : null,
+    resolvedAt: 0, startedAt: now, deadline: inTension(s, now) ? now + turnLimit(s) : null,
   };
-  return bump(s, { turn, turnCount: s.turnCount + 1 }, 'next');
+  return bump(s, { turn, turnCount: newCount }, 'next');
 }
 
 /** Einde Ronde 1 (stapel leeg) -> Ronde 2: uitpakken & kijken, geen tijdslimiet. */
@@ -438,7 +474,7 @@ export function startRound3(s: GameState, now: number): GameState {
   const activeId = s.turn.stage === 'task' ? nextActiveId(s, s.turn.activeId, 1) : s.turn.activeId;
   const r3 = { startAt: now, endAt, falseAlarmAt: Math.min(falseAlarmAt, endAt - 20_000), falseAlarmDone: false, tensionStarted: false };
   const s2: GameState = { ...s, phase: 'round3', direction: 1, r3 };
-  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: inTension(s2, now) ? now + TURN_LIMIT_MS : null };
+  const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: inTension(s2, now) ? now + turnLimit(s2) : null };
   return bump(s2, { turn, banner: { text: 'RONDE 3: DE GROTE FINALE!', until: now + 5000 } }, 'finale');
 }
 
@@ -457,7 +493,7 @@ export function tick(s: GameState, now: number): GameState {
     const r3 = cur.r3;
     if (now >= r3.endAt) return bump(cur, { phase: 'finished', turn: cur.turn ? { ...cur.turn, stage: 'ready', pending: null, deadline: null, task: null } : null, banner: null }, 'horn');
     if (!r3.tensionStarted && now >= r3.endAt - TENSION_MS) {
-      cur = bump(cur, { r3: { ...r3, tensionStarted: true }, turn: cur.turn && cur.turn.stage === 'ready' ? { ...cur.turn, deadline: now + TURN_LIMIT_MS } : cur.turn }, 'tension');
+      cur = bump(cur, { r3: { ...r3, tensionStarted: true }, turn: cur.turn && cur.turn.stage === 'ready' ? { ...cur.turn, deadline: now + turnLimit(cur) } : cur.turn }, 'tension');
     } else if (!r3.falseAlarmDone && now >= r3.falseAlarmAt) {
       cur = bump(cur, { r3: { ...r3, falseAlarmDone: true }, banner: { text: 'TUUUT! Vals alarm van Piet! 😜 Nog even doorspelen...', until: now + 5000 } }, 'falseAlarm');
     }
@@ -504,6 +540,13 @@ export function addPlayer(s: GameState, rawName: string): GameState {
   const name = clean(rawName.trim().replace(/\s+/g, ' ')).slice(0, 24);
   if (!name || s.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return s;
   return bump(s, { players: [...s.players, makePlayer(name, s.players.length, s.players)] });
+}
+
+/** Meerdere namen tegelijk (klassikaal): gescheiden door nieuwe regels of komma's. Dubbele namen worden overgeslagen. */
+export function addPlayers(s: GameState, raw: string): GameState {
+  let cur = s;
+  for (const n of raw.split(/[\n,;]+/)) cur = addPlayer(cur, n);
+  return cur;
 }
 
 export function removePlayer(s: GameState, id: string): GameState {

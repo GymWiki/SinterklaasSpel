@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadDemo, DEMO_ID } from '@/game/demo';
+import { loadDemo, loadDemoClass, DEMO_ID } from '@/game/demo';
 import { clearLocal, loadLocal } from '@/game/store';
 
 const LOCAL_ID = 'spel';
@@ -58,6 +58,7 @@ export default function Home() {
           >
             Start demo
           </button>
+          <button className="btn" onClick={() => { loadDemoClass(); router.push(`/host/${DEMO_ID}`); }}>🏫 Demo Klassikale Modus (32 leerlingen)</button>
           <p className="hint">Tip: open daarna het TV-scherm in een tweede tabblad om beide schermen te zien.</p>
         </section>
       </div>

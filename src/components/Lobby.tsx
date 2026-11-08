@@ -125,6 +125,15 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
 
       <section className="card">
         <h2>⚙️ Spelinstellingen</h2>
+        <label className="lbl">Spelmodus</label>
+        <div className="opts">
+          <button className={`opt ${(s.settings.mode ?? 'living') === 'living' ? 'on' : ''}`} onClick={() => update((st) => setSettings(st, { mode: 'living' }))}>
+            <span>🏠</span><b>Woonkamer-Modus</b><small>6-8 personen, 1-voor-1 beurten</small>
+          </button>
+          <button className={`opt ${s.settings.mode === 'class' ? 'on' : ''}`} onClick={() => update((st) => setSettings(st, { mode: 'class' }))}>
+            <span>🏫</span><b>Klassikale Modus (30+)</b><small>Snellere dobbelaar en klok, automatische Klasse-Schuif elke 4e beurt, compacte kring voor het digibord</small>
+          </button>
+        </div>
         <label className="lbl">Sfeer / doelgroep</label>
         <div className="opts">
           {AUDIENCES.map((a) => (

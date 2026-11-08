@@ -16,6 +16,7 @@ export interface Submission {
   content: string;
 }
 
+export type GameMode = 'living' | 'class';
 export type Phase = 'lobby' | 'round1' | 'round2' | 'round3' | 'finished';
 
 /** Tekst met tokens ({A}, {L}...) + welke speler bij welk token hoort. */
@@ -26,7 +27,7 @@ export interface Rich {
 
 export type TaskKind =
   | 'unwrap' | 'give' | 'neighbor' | 'opposite' | 'mini' | 'bonus' | 'party'
-  | 'steal' | 'deck' | 'balance' | 'chaos' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
+  | 'steal' | 'classshift' | 'deck' | 'balance' | 'chaos' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
 
 export interface BookCard {
   id: string;
@@ -94,7 +95,8 @@ export interface GameState {
   roomId: string;
   isDemo: boolean;
   phase: Phase;
-  settings: { audience: Audience; r3Minutes: number };
+  /** mode: 'living' = woonkamer (6-8 personen), 'class' = klassikaal (30+) */
+  settings: { audience: Audience; r3Minutes: number; mode?: GameMode };
   players: Player[];
   submissions: Submission[];
   removedIds: string[];

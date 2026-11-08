@@ -31,3 +31,14 @@ export function loadDemo(): GameState {
   saveLocal(s);
   return s;
 }
+
+const klas = ['Anna', 'Bram', 'Chloé', 'Daan', 'Eva', 'Finn', 'Gijs', 'Hanna', 'Ilias', 'Julia', 'Kai', 'Lotte', 'Mees', 'Noa', 'Olivier', 'Puck', 'Quinn', 'Ruben', 'Sara', 'Thijs', 'Umi', 'Vera', 'Wout', 'Xena', 'Yara', 'Zoë', 'Amir', 'Bo', 'Cas', 'Dina', 'Elif', 'Fay'];
+
+/** Demo van de Klassikale Modus: 32 leerlingen. */
+export function loadDemoClass(): GameState {
+  const s = createState(DEMO_ID, klas, [], true);
+  s.settings = { audience: 'kids', r3Minutes: 20, mode: 'class' };
+  s.youngestId = s.players[5].id;
+  saveLocal(s);
+  return s;
+}

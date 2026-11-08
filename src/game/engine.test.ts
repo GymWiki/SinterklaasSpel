@@ -330,3 +330,68 @@ test('simulatie: 500 beurten door alle rondes crasht niet en houdt invarianten',
     if (s.r3) now = Math.min(now, s.r3.endAt - 60_000 * 6);
   }
 });
+
+const klasNamen = Array.from({ length: 32 }, (_, i) => `Leerling${i + 1}`);
+
+test('klassikale modus: snellere dobbelaar, kortere Piet-klok, geen pingpong, 32 spelers', () => {
+  let s = E.createState('K', klasNamen, []);
+  s = E.setSettings(s, { mode: 'class' });
+  assert.equal(E.canStart(s), true);
+  s = E.startRound2(E.startRound1(s, 0), 0);
+  assert.equal(E.roll(s, 0, 1).turn!.rollMs, E.ROLL_CLASS_MS);
+  assert.equal(E.turnLimit(s), 15_000);
+  assert.equal(E.turnLimit(mk()), 20_000);
+  const many = new Set(Array.from({ length: 80 }, () => task(s, 4).main.tpl));
+  assert.ok([...many].every((t) => !/\(30 sec\)/.test(t)));
+  const s3 = E.startRound3(s, 0);
+  const t = s3.r3!.endAt - E.TENSION_MS + 10;
+  const ticked = E.tick(s3, t);
+  assert.equal(ticked.turn!.deadline, t + 15_000);
+});
+
+test('klassikale modus: elke 4e beurt een automatische Klasse-Schuif (telt niet als beurt)', () => {
+  for (const phase of ['round1', 'round2', 'round3'] as const) {
+    let s = E.setSettings(E.createState('K', klasNamen, []), { mode: 'class' });
+    s = E.startRound1(s, 0);
+    if (phase !== 'round1') s = E.startRound2(s, 0);
+    if (phase === 'round3') s = E.startRound3(s, 0);
+    let now = 0;
+    let events = 0;
+    const order: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const r = play(s, now, 1);
+      s = r.s; now = r.now + 1000;
+      s = E.next(s, now);
+      now += 1500;
+      if (s.turn!.task?.kind === 'classshift') {
+        events++;
+        assert.equal(s.turn!.stage, 'task');
+        assert.ok(s.turn!.task!.arrow);
+        assert.equal(s.turn!.die, null);
+        const who = s.turn!.activeId;
+        s = E.next(s, now);
+        now += 1500;
+        assert.equal(s.turn!.stage, 'ready');
+        assert.equal(s.turn!.activeId, who); // dezelfde speler gooit nu gewoon
+      }
+      order.push(s.turn!.activeId);
+    }
+    assert.equal(events, 3, phase);
+    assert.equal(new Set(order).size, order.length); // niemand wordt overgeslagen of dubbel gespeeld
+  }
+});
+
+test('woonkamer-modus: nooit een Klasse-Schuif', () => {
+  let s = E.startRound1(mk(), 0);
+  let now = 0;
+  for (let i = 0; i < 16; i++) {
+    const r = play(s, now, 1); s = r.s; now = r.now + 1000;
+    s = E.next(s, now); now += 1500;
+    assert.notEqual(s.turn!.task?.kind, 'classshift');
+  }
+});
+
+test('veel namen tegelijk toevoegen slaat dubbelen over', () => {
+  const s = E.addPlayers(E.createState('K', ['Anna'], []), 'Bram\nChloé, Anna;Daan\n\n  ');
+  assert.deepEqual(s.players.map((p) => p.name), ['Anna', 'Bram', 'Chloé', 'Daan']);
+});

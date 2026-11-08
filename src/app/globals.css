@@ -432,3 +432,22 @@ h1, h2, .tv-title, .legend-title, .legend-kicker, .banner, .finish h1, .finish h
 .spin { display: inline-block; width: 1.1em; height: 1.1em; border: 0.18em solid #ffffff55; border-top-color: #fff; border-radius: 50%; animation: spin360 0.8s linear infinite; vertical-align: -0.15em; margin-right: 8px; }
 @keyframes spin360 { to { transform: rotate(360deg); } }
 .rolling-box { display: grid; place-items: center; }
+
+/* ---------- Klassikale Modus (digibord, 30+ spelers) ---------- */
+.mode-tag { font-size: 0.6em; opacity: 0.85; font-family: var(--sans); }
+.ring.dense .seat { padding: 0.3cqmin 1.2cqmin; border-width: 0.4cqmin; max-width: 18cqmin; gap: 0; }
+.ring.dense .seat-nm { font-weight: 800; }
+.ring.dense .seat.active { max-width: 40cqmin; transform: translate(-50%, -50%) scale(1.9); z-index: 9; }
+.ring.dense .seat.active .seat-nm { font-size: calc(var(--fs) * 1.25cqmin); }
+.ring.dense .seat.hl { z-index: 6; transform: translate(-50%, -50%) scale(1.35); }
+.ring.dense .ring-center { width: 34cqmin; height: 34cqmin; }
+.ring.dense .dice3d { --s: 22cqmin; }
+.ring.dense .pill { padding: 0 0.6cqmin; }
+@keyframes activepulse-dense { 0%, 100% { transform: translate(-50%, -50%) scale(1.8); } 50% { transform: translate(-50%, -50%) scale(2); } }
+.ring.dense .seat.active { animation-name: activepulse-dense; }
+.tv.class .ring-arrow { font-size: 78cqmin; opacity: 0.38; }
+.tv.class .ring-line.bold ellipse { stroke-width: 12; }
+.tv.class .task-main { font-weight: 900; }
+.tv.class .banner { font-size: 6.4vmin; padding: 3vmin 6vmin; }
+.tv.class .countdown { font-size: 12vmin; }
+.tv.class .legend li { font-size: 2.3vmin; }

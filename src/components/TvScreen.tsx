@@ -155,10 +155,10 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
   const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'round2' ? 'Ronde 2 · Uitpakken & Kijken' : s.phase === 'round3' ? (tension ? 'Ronde 3 · De ontknoping!' : 'Ronde 3 · De Grote Finale') : s.phase === 'finished' ? 'Einde!' : 'Pakjesavond Live';
 
   return (
-    <div className={`tv ${tension ? 'tension' : ''} ${turbo ? 'turbo' : ''}`}>
+    <div className={`tv ${tension ? 'tension' : ''} ${turbo ? 'turbo' : ''} ${s.settings.mode === 'class' ? 'class' : ''}`}>
       <Ambient />
       <header className="tv-top">
-        <div className="tv-title">🎅 {roundLabel}</div>
+        <div className="tv-title">🎅 {roundLabel}{s.settings.mode === 'class' && <small className="mode-tag"> · 🏫 Klas ({s.players.length})</small>}</div>
         <Boat s={s} now={now} />
         <div className="tv-status">
           {(s.phase === 'round3' || s.phase === 'finished') && <span title="Slotjes">🔒 {s.locks.length}</span>}
@@ -202,7 +202,7 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
               {t.stage === 'ready' && (
                 <>
                   <div className="turn-hint">{tension ? 'Schiet op, Piet! Gooi de dobbelsteen!' : 'is aan de beurt. Gooi de dobbelsteen!'}</div>
-                  {deadlineLeft !== null && <TimerRing left={deadlineLeft} total={20} />}
+                  {deadlineLeft !== null && <TimerRing left={deadlineLeft} total={s.settings.mode === 'class' ? 15 : 20} />}
                 </>
               )}
               {t.stage === 'rolling' && <div className="turn-hint pulse">De dobbelsteen rolt...</div>}

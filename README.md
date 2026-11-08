@@ -25,6 +25,10 @@ Tabellen worden automatisch aangemaakt (`CREATE TABLE IF NOT EXISTS`); `npm run 
 Alles draait 100% lokaal (localStorage); er zijn geen database-requests nodig. TV en controller moeten in dezelfde browser
 (twee tabbladen/vensters op dezelfde laptop) draaien.
 
+Twee spelmodi (kies in de lobby):
+- **🏠 Woonkamer-Modus** (6-8 personen): 1-voor-1 beurten met host-telefoon en TV.
+- **🏫 Klassikale Modus (30+)**: snellere dobbelaar en Schiet-op-Piet-klok (15s), geen lange pingpong-duels, een automatische **Klasse-Schuif** (iedereen geeft tegelijk een cadeau door) elke 4e beurt, een compacte tweeringige kring voor het digibord en extra grote pijlen. Namen kun je in bulk plakken; probeer de demo met 32 leerlingen op de startpagina.
+
 Drie rondes, met per ronde een vaste betekenis per dobbelsteen-getal (zichtbaar in de **Dobbelsteen-Legenda** links op het TV-scherm; het gegooide getal licht op):
 1. **Verdeelronde** (geen tijdslimiet): 6 vaste regels, tot de stapel leeg is.
 2. **Uitpakronde** (geen tijdslimiet): rustige vaste regels; alleen gooi 4 is een Huiskamer-Opdracht.

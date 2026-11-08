@@ -35,7 +35,7 @@ export function PlayersPanel({ state: s, update }: { state: GameState; update: U
               <button className="btn small ghost" disabled={i === 0} onClick={() => update((st) => movePlayer(st, i, i - 1))} aria-label={`${p.name} omhoog`}>▲</button>
               <button className="btn small ghost" disabled={i === n - 1} onClick={() => update((st) => movePlayer(st, i, i + 1))} aria-label={`${p.name} omlaag`}>▼</button>
               <button className={`btn small ${p.paused ? 'warn' : 'ghost'}`} onClick={() => update((st) => setPaused(st, p.id, !p.paused))} title="Pauze (even naar de wc)">{p.paused ? '▶️' : '⏸️'}</button>
-              {lobby && n > 3 && <button className="btn small ghost" onClick={() => update((st) => removePlayer(st, p.id))} aria-label={`${p.name} verwijderen`}>✕</button>}
+              {lobby && <button className="btn small ghost" onClick={() => update((st) => removePlayer(st, p.id))} aria-label={`${p.name} verwijderen`}>✕</button>}
             </span>
           </li>
         ))}

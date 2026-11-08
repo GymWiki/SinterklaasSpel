@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, redirect } from 'next/navigation';
+import { FEATURES } from '@/lib/features';
 import { POEM_PROMPTS, SECRET_PROMPTS, STATEMENTS, POEM_LEADS_HINT } from '@/content/prompts';
 import { GENERAL_TARGET, MAX_CONTENT, composeContent, contentOk, countWords } from '@/lib/constants';
 
@@ -9,6 +10,7 @@ const OTHER = '__other__';
 const authorKey = (id: string) => `pakjesavond:author:${id}`;
 
 export default function JoinPage() {
+  if (!FEATURES.book) redirect('/'); // MVP: Grote Boek / vooraf insturen staat uit
   const { roomId: raw } = useParams<{ roomId: string }>();
   const roomId = String(raw).toUpperCase();
   const [players, setPlayers] = useState<string[] | null>(null);

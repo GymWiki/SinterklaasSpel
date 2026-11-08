@@ -5,6 +5,7 @@ import { Dice } from './Dice';
 import { RichText } from './Rich';
 import { Confetti } from './Confetti';
 import { QR } from './QR';
+import { FEATURES } from '@/lib/features';
 import { inTension, inTurbo, playerById } from '@/game/engine';
 import { sfx } from '@/game/sound';
 import type { GameState, Task } from '@/game/types';
@@ -134,8 +135,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
           {s.phase === 'lobby' && (
             <div className="panel-lobby">
               <h1>Welkom bij Pakjesavond Live!</h1>
-              <p className="big">Het Grote Boek is geladen met <b>{s.submissions.length}</b> geheimen en gedichten!</p>
-              {origin && !s.isDemo && (
+              {FEATURES.book ? <p className="big">Het Grote Boek is geladen met <b>{s.submissions.length}</b> geheimen en gedichten!</p> : <p className="big">{s.players.length ? <><b>{s.players.length}</b> spelers zitten klaar in de kring.</> : 'De host zet de spelers klaar...'}</p>}
+              {FEATURES.book && origin && !s.isDemo && (
                 <div className="join-qr">
                   <QR text={`${origin}/join/${s.roomId}`} size={190} />
                   <div>

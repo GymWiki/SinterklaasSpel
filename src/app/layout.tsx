@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Pakjesavond Live',
-  description: 'Het interactieve Sinterklaas-dobbelspel voor de woonkamer, met Het Grote Boek van Sinterklaas.',
+  description: 'Het interactieve Sinterklaas-dobbelspel voor de woonkamer.',
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#120d2b' };
 

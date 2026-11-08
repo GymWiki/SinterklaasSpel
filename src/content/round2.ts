@@ -43,3 +43,19 @@ export const R2_CHAIRS: string[] = [
   '💺 STOELENDANS! {P} en {Q} wisselen fysiek van stoel. Hun cadeaus blijven liggen waar ze lagen!',
   '💺 Wissel! {P} en {Q} wisselen van plek in de woonkamer, de cadeaus blijven op hun plaats!',
 ];
+
+/** Worp 6 in Ronde 2 (zonder Grote Boek): Chaos / Bonus. */
+export const R2_DOUBLE: string[] = [
+  '💥 DUBBELE RUIL! {A}, ruil een cadeau met {L} (links van je) én daarna een cadeau met {O} (tegenover je)!',
+  '💥 DUBBELE RUIL! {A}, ruil een cadeau met {R} (rechts van je) én daarna een cadeau met {X}!',
+  '💥 DUBBELE RUIL! {A}, ruil een cadeau met {O} (tegenover je) én daarna met {L} (links van je)!',
+];
+export const R2_BIGCHAIRS: string[] = [
+  '💥 CHAOS! {P} ↔ {Q} en {U} ↔ {V} wisselen tegelijk van stoel! Alle cadeaus blijven liggen waar ze lagen!',
+  '💥 STOELENDANS-CHAOS! {P} en {Q} wisselen van plek, en tegelijk ook {U} en {V}! De cadeaus blijven op hun plaats!',
+];
+export const R2_BONUS: string[] = [
+  '🎰 BONUS-BEURT! {A}, steel een cadeau van {O} (tegenover je) en gooi daarna meteen nóg een keer!',
+  '🎰 BONUS-BEURT! {A}, ruil een cadeau met {L} (links van je) en gooi daarna meteen nóg een keer!',
+  '🎰 BONUS-BEURT! {A}, steel een cadeau van {X} en gooi daarna meteen nóg een keer!',
+];

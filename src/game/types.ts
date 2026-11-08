@@ -26,7 +26,7 @@ export interface Rich {
 
 export type TaskKind =
   | 'unwrap' | 'give' | 'neighbor' | 'opposite' | 'mini' | 'bonus' | 'party'
-  | 'steal' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
+  | 'steal' | 'bonus' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
 
 export interface BookCard {
   id: string;
@@ -59,6 +59,7 @@ export type Effect =
   | { t: 'lock'; id: string }
   | { t: 'mijter'; id: string }
   | { t: 'reverse' }
+  | { t: 'again' }
   | { t: 'swap'; a: string; b: string }
   | { t: 'book'; cardId: string; source: 'submission' | 'builtin'; target: string | null };
 
@@ -76,6 +77,8 @@ export interface Turn {
   /** "Schiet-op-Piet" deadline voor de worp (alleen in de ontknoping) */
   deadline: number | null;
   startedAt: number;
+  /** bonus-beurt: dezelfde speler gooit nog een keer */
+  again?: boolean;
 }
 
 export interface DeckState {

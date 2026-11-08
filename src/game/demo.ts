@@ -1,4 +1,5 @@
 import { GENERAL_TARGET } from '@/lib/constants';
+import { FEATURES } from '@/lib/features';
 import { createState } from './engine';
 import { saveLocal } from './store';
 import type { GameState, Submission } from './types';
@@ -25,7 +26,7 @@ export function demoSubmissions(): Submission[] {
 
 /** Zet een compleet voorbeeldspel (6 spelers, 10 inzendingen) in localStorage. */
 export function loadDemo(): GameState {
-  const s = createState(DEMO_ID, names, demoSubmissions(), true);
+  const s = createState(DEMO_ID, names, FEATURES.book ? demoSubmissions() : [], true);
   s.settings = { audience: 'mixed', r2Minutes: 20 };
   saveLocal(s);
   return s;

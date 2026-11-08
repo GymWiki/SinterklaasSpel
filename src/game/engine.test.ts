@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as E from './engine';
 import { GENERAL_TARGET } from '../lib/constants';
+import { FEATURES } from '../lib/features';
 import type { GameState, Submission } from './types';
 
 const names = ['Sander', 'Lisa', 'Tim', 'Noor', 'Daan', 'Emma'];
@@ -130,6 +131,8 @@ test('stoelendans wisselt namen en laat slotje bij de stoel', () => {
 });
 
 test('Grote Boek: eerst inzendingen, nooit 3x dezelfde schuldige, daarna ingebouwde vragen', () => {
+  FEATURES.book = true;
+  try {
   const many: Submission[] = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, authorName: 'Tim', targetPlayerName: 'Lisa', type: 'secret', content: `Alles over Lisa ${i} en meer` }));
   let s = E.startRound2(E.startRound1(E.createState('X', names, many), 0), 0);
   let now = 0;
@@ -147,9 +150,12 @@ test('Grote Boek: eerst inzendingen, nooit 3x dezelfde schuldige, daarna ingebou
   // nooit drie keer Lisa achter elkaar
   for (let i = 2; i < seen.length; i++) assert.ok(!(seen[i] === 'Lisa' && seen[i - 1] === 'Lisa' && seen[i - 2] === 'Lisa'), seen.join());
   assert.ok(seen.includes('-'));
+  } finally { FEATURES.book = false; }
 });
 
 test('boek-onthulling pas na tromgeroffel; Volgende pas na onthulling', () => {
+  FEATURES.book = true;
+  try {
   let s = E.startRound2(E.startRound1(E.createState('X', names, subs(4)), 0), 0);
   const r = play(s, 0, 6);
   s = r.s;
@@ -158,6 +164,7 @@ test('boek-onthulling pas na tromgeroffel; Volgende pas na onthulling', () => {
   assert.equal(E.canNext(s, t0 + 5000), false);
   const rev = E.revealBook(s, t0 + 4000);
   assert.equal(E.canNext(rev, t0 + 5000), true);
+  } finally { FEATURES.book = false; }
 });
 
 test('einde: onzichtbare klok, tension, vals alarm, turbo, finish', () => {
@@ -201,4 +208,43 @@ test('volledige simulatie van 400 beurten crasht niet en houdt invarianten', () 
     if (s.phase === 'finished') break;
     if (s.r2) now = Math.min(now, s.r2.endAt - 60_000 * 6);
   }
+});
+
+test('MVP: worp 6 in ronde 2 is nooit het Grote Boek maar chaos/bonus', () => {
+  const kinds = new Set<string>();
+  let s0 = E.startRound2(E.startRound1(E.createState('X', names, subs(5)), 0), 0);
+  for (let i = 0; i < 60; i++) {
+    const r = play(s0, 0, 6);
+    const t = r.s.turn!.task!;
+    assert.ok(!t.book);
+    kinds.add(t.title);
+  }
+  assert.ok(kinds.size >= 2, [...kinds].join());
+});
+
+test('bonus-beurt: dezelfde speler gooit nog een keer; stoelen-chaos wisselt twee paren', () => {
+  let s = E.startRound2(E.startRound1(E.createState('X', names, []), 0), 0);
+  let sawBonus = false, sawBig = false, now = 0;
+  for (let i = 0; i < 200 && !(sawBonus && sawBig); i++) {
+    const before = s.players.map((p) => p.id);
+    const active = s.turn!.activeId;
+    const r = play(s, now, 6);
+    s = r.s; now = r.now;
+    const t = s.turn!.task!;
+    if (t.kind === 'bonus') {
+      sawBonus = true;
+      s = E.next(s, now + 1000);
+      assert.equal(s.turn!.activeId, active);
+      assert.equal(s.turn!.again, false);
+    } else {
+      if (t.title.includes('STOELENDANS')) {
+        sawBig = true;
+        const after = s.players.map((p) => p.id);
+        assert.equal(after.filter((id, k) => id !== before[k]).length, 4);
+      }
+      s = E.next(s, now + 1000);
+    }
+    now += 2000;
+  }
+  assert.ok(sawBonus && sawBig);
 });

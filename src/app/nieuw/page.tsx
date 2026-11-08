@@ -1,10 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { redirect } from 'next/navigation';
+import { FEATURES } from '@/lib/features';
 import { QR } from '@/components/QR';
 import { pinKey } from '@/game/store';
 
 export default function NewGame() {
+  if (!FEATURES.book) redirect('/'); // MVP: Grote Boek / vooraf insturen staat uit
   const [host, setHost] = useState('');
   const [others, setOthers] = useState(['', '']);
   const [pin, setPin] = useState('');

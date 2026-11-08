@@ -6,6 +6,7 @@ import { PlayersPanel } from './PlayersPanel';
 import { canStart, mergeSubmissions, removeSubmission, setSettings, startRound1 } from '@/game/engine';
 import { AUDIENCES } from '@/content/tags';
 import { pinKey, clearLocal } from '@/game/store';
+import { FEATURES } from '@/lib/features';
 import type { GameState, Submission } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
@@ -78,7 +79,8 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
 
   return (
     <div className="stack">
-      <section className="card book-card">
+      {FEATURES.book ? (
+        <section className="card book-card">
         <h2>📖 Het Grote Boek is geladen met <b>{s.submissions.length}</b> geheimen en gedichten!</h2>
         {s.loadedAt && <p className="hint">Laatst opgehaald om {new Date(s.loadedAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}. Tijdens het spel zijn er geen database-requests meer nodig.</p>}
         <button className="btn gold big" onClick={refresh} disabled={busy}>{busy ? 'Bezig...' : '🔄 Ververs inzendingen'}</button>
@@ -94,6 +96,13 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
           </div>
         )}
       </section>
+
+      ) : (
+        <section className="card book-card">
+          <h2>🎄 Zet het spel klaar</h2>
+          <p>Voer de spelers in op zitvolgorde, kies de jongste speler en de sfeer. Daarna start je Ronde 1.</p>
+        </section>
+      )}
 
       <section className="card">
         <h2>📺 TV-scherm</h2>
@@ -127,6 +136,7 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
         </div>
       </section>
 
+      {FEATURES.book && (
       <section className="card">
         <h2>🙈 Inzendingen (gemaskeerd)</h2>
         <p className="hint">Zo blijft de tekst een verrassing. Verwijder alleen dubbele inzendingen (⚠️ = lijkt erg op een andere).</p>
@@ -144,18 +154,20 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
         </ul>
       </section>
 
+      )}
+
       <section className="card start-card">
         {!canStart(s) && <p className="err">Minimaal 3 spelers die niet op pauze staan.</p>}
         <button className="btn primary huge" disabled={!canStart(s)} onClick={() => update(startRound1)}>🎅 Start Ronde 1: de Verdeelronde</button>
         <button
           className="linkbtn"
           onClick={() => {
-            if (!window.confirm('Lokale spelstate wissen en alles opnieuw uit de cloud laden?')) return;
+            if (!window.confirm('Alle spelers en instellingen wissen en opnieuw beginnen?')) return;
             clearLocal(s.roomId);
             window.location.reload();
           }}
         >
-          Alles opnieuw laden (lokale state wissen)
+          Alles wissen en opnieuw beginnen
         </button>
       </section>
     </div>

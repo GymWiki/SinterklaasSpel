@@ -6,6 +6,7 @@ import { Lobby } from '@/components/Lobby';
 import { Controller } from '@/components/Controller';
 import { createState } from '@/game/engine';
 import { DEMO_ID, loadDemo } from '@/game/demo';
+import { FEATURES } from '@/lib/features';
 import { pinKey, useHostGame, useNow, useWakeLock } from '@/game/store';
 import { useSoundDriver } from '@/game/useSound';
 import { sfx } from '@/game/sound';
@@ -65,17 +66,19 @@ export default function HostPage() {
     return () => window.removeEventListener('pointerdown', unlock);
   }, []);
   useEffect(() => {
-    if (loaded && !state && roomId === DEMO_ID) replace(loadDemo());
+    if (!loaded || state) return;
+    if (roomId === DEMO_ID) replace(loadDemo());
+    else if (!FEATURES.book) replace(createState(roomId, [], [])); // MVP: gewoon lokaal beginnen, geen database
   }, [loaded, state, roomId, replace]);
 
   if (!loaded) return <main className="page narrow"><p>Laden...</p></main>;
-  if (!state) return roomId === DEMO_ID ? <main className="page narrow"><p>Demo laden...</p></main> : <Gate roomId={roomId} onLoaded={replace} />;
+  if (!state) return roomId === DEMO_ID || !FEATURES.book ? <main className="page narrow"><p>Spel klaarzetten...</p></main> : <Gate roomId={roomId} onLoaded={replace} />;
 
   return (
     <main className="page host">
       <header className="host-head">
         <Link href="/" className="back">← Start</Link>
-        <h1>🎅 Pakjesavond Live {state.isDemo && <span className="chip">DEMO</span>} <span className="chip">{state.roomId}</span></h1>
+        <h1>🎅 Pakjesavond Live {state.isDemo && <span className="chip">DEMO</span>}{FEATURES.book && <span className="chip">{state.roomId}</span>}</h1>
       </header>
       {state.phase === 'lobby' ? <Lobby state={state} update={update} replace={replace} /> : <Controller state={state} update={update} now={now} />}
     </main>

@@ -14,19 +14,21 @@ npm test                     # engine-tests
 
 Tabellen worden automatisch aangemaakt (`CREATE TABLE IF NOT EXISTS`); `npm run db:push` kan ook (drizzle-kit).
 
-## Flow
+## Flow (MVP)
 
 | Route | Doel |
 |---|---|
-| `/` | Start, host-toegang, **Demo-modus** (6 spelers + 10 inzendingen, volledig lokaal) |
-| `/nieuw` | Kamer + hostPin + spelers aanmaken, deelbare `/join/[roomId]`-link |
-| `/join/[roomId]` | 3-staps invul-flow (vraag → aanloopzin → live TV-preview) of kant-en-klare stelling |
-| `/host/[roomId]` | Pin → **één** API-call haalt kamer + inzendingen naar localStorage. Lobby, zitkring, controller |
-| `/tv/[roomId]` | 10-foot TV-scherm (100vh, geen scrollbars), synchroniseert via `BroadcastChannel` + `storage` |
+| `/` | Nieuw spel, verder met lopend spel, **Demo-modus** (6 spelers) |
+| `/host/spel` | Lobby (spelers op zitvolgorde, 🍼 jongste speler, sfeer, speelduur Ronde 2) en daarna de controller |
+| `/tv/spel` | 10-foot TV-scherm (100vh, geen scrollbars), synchroniseert via `BroadcastChannel` + `storage` |
 
-Tijdens het spel zijn er **geen** database-requests meer. TV en controller moeten in dezelfde browser
-(twee tabbladen/vensters op dezelfde laptop) draaien. Een losse telefoon als afstandsbediening
-vereist een echte P2P/WebRTC-koppeling en zit er niet in.
+Alles draait 100% lokaal (localStorage); er zijn geen database-requests nodig. TV en controller moeten in dezelfde browser
+(twee tabbladen/vensters op dezelfde laptop) draaien.
+
+Ronde 1 = Verdeelronde met 6 vaste uitkomsten, dan een uitpak-moment, dan Ronde 2 (geheime stoomboot-klok) waar worp 6 Chaos/Bonus is.
+
+**Het Grote Boek staat uit** (`src/lib/features.ts` → `FEATURES.book = false`). Code, API-routes (`/api/rooms/**`),
+pagina's `/nieuw` en `/join/[roomId]` en de Drizzle-tabellen (`rooms`, `submissions`) zijn intact; zet de vlag op `true` om alles terug te krijgen.
 
 ## Techniek
 

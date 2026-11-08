@@ -1,46 +1,54 @@
 'use client';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { loadDemo, DEMO_ID } from '@/game/demo';
+import { clearLocal, loadLocal } from '@/game/store';
+
+const LOCAL_ID = 'spel';
 
 export default function Home() {
   const router = useRouter();
-  const [code, setCode] = useState('');
+  const [running, setRunning] = useState(false);
+  useEffect(() => {
+    const s = loadLocal(LOCAL_ID);
+    setRunning(!!s && (s.players.length > 0 || s.phase !== 'lobby'));
+  }, []);
+
   return (
-    <main className="page">
+    <main className="page narrow">
       <div className="hero">
         <div className="hero-ic">🎅🎲🎁</div>
         <h1>Pakjesavond Live</h1>
-        <p>Het dobbelspel voor de woonkamer. Vul vooraf <b>Het Grote Boek van Sinterklaas</b> met geheimen en gedichtjes, speel op pakjesavond met één scherm en één dobbelsteen.</p>
+        <p>Het dobbelspel voor de woonkamer: één scherm, één dobbelsteen en een zitkring vol cadeaus. Alles draait lokaal op dit apparaat.</p>
       </div>
 
       <div className="cards">
-        <section className="card">
-          <h2>🗓️ Nieuw spel plannen</h2>
-          <p>Maak een kamer, vul de spelers in en deel de link in WhatsApp zodat iedereen alvast kan insturen.</p>
-          <Link className="btn primary" href="/nieuw">Spel aanmaken</Link>
-        </section>
+        {running && (
+          <section className="card">
+            <h2>▶️ Verder met het lopende spel</h2>
+            <p>Je spel staat nog klaar op dit apparaat.</p>
+            <button className="btn primary big" onClick={() => router.push(`/host/${LOCAL_ID}`)}>Verder spelen</button>
+          </section>
+        )}
 
         <section className="card">
-          <h2>🎄 Ik ben de host</h2>
-          <p>Open je kamer op pakjesavond met je kamercode en pincode.</p>
-          <form
-            className="row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const c = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
-              if (c) router.push(`/host/${c}`);
+          <h2>🎄 Nieuw spel</h2>
+          <p>Voer de spelers in op zitvolgorde, kies de jongste speler en de sfeer, en speel direct met het TV-scherm en de host-controller.</p>
+          <button
+            className={`btn big ${running ? '' : 'primary'}`}
+            onClick={() => {
+              if (running && !window.confirm('Het lopende spel wissen en opnieuw beginnen?')) return;
+              clearLocal(LOCAL_ID);
+              router.push(`/host/${LOCAL_ID}`);
             }}
           >
-            <input className="input code-in" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Kamercode (6 tekens)" maxLength={10} autoCapitalize="characters" />
-            <button className="btn">Open</button>
-          </form>
+            Nieuw spel opzetten
+          </button>
         </section>
 
         <section className="card">
           <h2>⚡ Snel testen / Demo-modus</h2>
-          <p>Laad met één klik een compleet voorbeeldspel: 6 spelers in een zitkring en 10 ingevulde Grote Boek-inzendingen. Alles draait lokaal.</p>
+          <p>Laad met één klik een voorbeeldspel met 6 spelers in een zitkring.</p>
           <button
             className="btn gold"
             onClick={() => {

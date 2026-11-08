@@ -1,0 +1,166 @@
+[
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'cadeau'.",
+  "antwoord": "niveau, studio, tableau, radio",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'schoorsteen'.",
+  "antwoord": "been, steen, geen, alleen, meen",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Maak een rijmpje van 2 regels met het woord 'speculaas'.",
+  "antwoord": "De klas beslist of het rijmt!",
+  "tijd": 45
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'zakje'.",
+  "antwoord": "takje, pakje, rakje, dakje, bakje",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Maak een rijmpje van 2 regels over het paard van Sinterklaas.",
+  "antwoord": "De klas beslist of het rijmt!",
+  "tijd": 45
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Hoe heet het paard van Sinterklaas?",
+  "antwoord": "Amerigo",
+  "tijd": 20
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik zit boven in een huis, rook gaat door mij naar buiten en Piet komt door mij naar binnen. Wat ben ik?",
+  "antwoord": "De schoorsteen",
+  "tijd": 25
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik heb wel steden maar geen huizen, wel bergen maar geen bomen, wel water maar geen vissen. Wat ben ik?",
+  "antwoord": "Een landkaart",
+  "tijd": 30
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Hoe meer je er van maakt, hoe meer je er achterlaat. Wat is het?",
+  "antwoord": "Voetstappen",
+  "tijd": 30
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik heb vier poten maar kan niet lopen, en jij zit op mij. Wat ben ik?",
+  "antwoord": "Een stoel",
+  "tijd": 30
+ },
+ {
+  "type": "reken",
+  "tekst": "Een pakje kost 7 euro. Hoeveel kosten 6 pakjes?",
+  "antwoord": "42 euro",
+  "tijd": 30
+ },
+ {
+  "type": "reken",
+  "tekst": "Sinterklaas deelt 45 pepernoten eerlijk over 5 kinderen. Hoeveel krijgt ieder kind?",
+  "antwoord": "9",
+  "tijd": 30
+ },
+ {
+  "type": "reken",
+  "tekst": "Hoeveel is 8 x 7?",
+  "antwoord": "56",
+  "tijd": 20
+ },
+ {
+  "type": "reken",
+  "tekst": "Een zak snoep weegt 250 gram. Hoeveel gram zijn 4 zakken?",
+  "antwoord": "1000 gram (1 kilo)",
+  "tijd": 30
+ },
+ {
+  "type": "reken",
+  "tekst": "Hoeveel minuten zijn 2 uur?",
+  "antwoord": "120",
+  "tijd": 25
+ },
+ {
+  "type": "taal",
+  "tekst": "Wat is het voltooid deelwoord van 'brengen'?",
+  "antwoord": "Gebracht",
+  "tijd": 20
+ },
+ {
+  "type": "taal",
+  "tekst": "Hoe spel je 'cadeau'?",
+  "antwoord": "c-a-d-e-a-u",
+  "tijd": 25
+ },
+ {
+  "type": "taal",
+  "tekst": "Noem 3 woorden met 'sch' erin.",
+  "antwoord": "schoen, school, schaap, schaar...",
+  "tijd": 25
+ },
+ {
+  "type": "kennis",
+  "tekst": "Op welke datum is Sinterklaas jarig volgens de traditie?",
+  "antwoord": "6 december",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoe heet het schip waarmee Sinterklaas komt?",
+  "antwoord": "De stoomboot",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "In welk land is de echte Sint-Nicolaas geboren (Myra)?",
+  "antwoord": "Turkije",
+  "tijd": 30
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoe heet het sinterklaasliedje: 'Sinterklaas kapoentje, gooi wat in mijn ...'?",
+  "antwoord": "Schoentje",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Wat doen kinderen met het paard van Sinterklaas in de schoen?",
+  "antwoord": "Wortel of hooi erin doen",
+  "tijd": 25
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoe heet de plaats waar Sinterklaas volgens het verhaal woont?",
+  "antwoord": "Spanje",
+  "tijd": 20
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het hele team doet 20 seconden lang alsof het een pakjes-lopende-band is: geef een denkbeeldig pakje door!",
+  "tijd": 30
+ },
+ {
+  "type": "beweging",
+  "tekst": "Maak samen met je team een standbeeld van Sinterklaas op zijn paard en houd het 10 seconden vast!",
+  "tijd": 25
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het team laat in 15 seconden zien hoe Piet door de schoorsteen glijdt (zonder geluid!).",
+  "tijd": 25
+ },
+ {
+  "type": "beweging",
+  "tekst": "Alle teamleden zeggen om de beurt één woord dat met 'P' begint. Hoe lang houden jullie dat vol?",
+  "tijd": 30
+ }
+]

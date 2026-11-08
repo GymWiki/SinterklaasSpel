@@ -1,0 +1,171 @@
+[
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'schoen'.",
+  "antwoord": "groen, doen, toen, boen",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'Sint'.",
+  "antwoord": "kind, wind, vind, lint",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 2 woorden die rijmen op 'paard'.",
+  "antwoord": "baard, waard, aard",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 2 woorden die rijmen op 'boot'.",
+  "antwoord": "rood, brood, dood, nood",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'zak'.",
+  "antwoord": "dak, pak, bak, tak, vak",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Verzin samen een rijmpje van 2 regels over een pepernoot.",
+  "antwoord": "De klas beslist of het rijmt!",
+  "tijd": 45
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik heb een lange baard en zit op een paard. Wie ben ik?",
+  "antwoord": "Sinterklaas",
+  "tijd": 20
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik ben rond, kruidig en lekker. Je gooit mij in het rond. Wat ben ik?",
+  "antwoord": "Een pepernoot",
+  "tijd": 20
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik ben groot, ik vaar over zee en breng Sinterklaas naar Nederland. Wat ben ik?",
+  "antwoord": "De stoomboot",
+  "tijd": 20
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik ben oranje en crunchy en ik zit in de schoen voor het paard. Wat ben ik?",
+  "antwoord": "Een wortel",
+  "tijd": 20
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik draag een mijter en heb een staf in mijn hand. Wie ben ik?",
+  "antwoord": "Sinterklaas",
+  "tijd": 20
+ },
+ {
+  "type": "reken",
+  "tekst": "Sinterklaas heeft 6 pakjes en krijgt er 5 bij. Hoeveel pakjes heeft hij nu?",
+  "antwoord": "11",
+  "tijd": 25
+ },
+ {
+  "type": "reken",
+  "tekst": "In een zak zitten 10 pepernoten. Piet eet er 4 op. Hoeveel blijven er over?",
+  "antwoord": "6",
+  "tijd": 25
+ },
+ {
+  "type": "reken",
+  "tekst": "Hoeveel is 5 + 5 + 5?",
+  "antwoord": "15",
+  "tijd": 20
+ },
+ {
+  "type": "reken",
+  "tekst": "Er staan 3 schoenen. In elke schoen zit 2 snoepjes. Hoeveel snoepjes zijn er samen?",
+  "antwoord": "6",
+  "tijd": 25
+ },
+ {
+  "type": "taal",
+  "tekst": "Hoeveel lettergrepen heeft het woord 'Sinterklaas'? (Klap het maar!)",
+  "antwoord": "3 (sin-ter-klaas)",
+  "tijd": 20
+ },
+ {
+  "type": "taal",
+  "tekst": "Wat is het meervoud van 'pakje'?",
+  "antwoord": "Pakjes",
+  "tijd": 20
+ },
+ {
+  "type": "taal",
+  "tekst": "Wat is het tegenovergestelde van 'groot'?",
+  "antwoord": "Klein",
+  "tijd": 15
+ },
+ {
+  "type": "kennis",
+  "tekst": "Uit welk land komt Sinterklaas volgens het verhaal?",
+  "antwoord": "Spanje",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Op welke avond is het pakjesavond?",
+  "antwoord": "5 december",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Met welk vervoermiddel komt Sinterklaas in Nederland aan?",
+  "antwoord": "Met de stoomboot",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Waar zetten kinderen hun schoen?",
+  "antwoord": "Bij de schoorsteen",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Welke kleur heeft de mantel van Sinterklaas?",
+  "antwoord": "Rood",
+  "tijd": 15
+ },
+ {
+  "type": "kennis",
+  "tekst": "In welk boek leest Sinterklaas of je lief of stout was?",
+  "antwoord": "Het grote boek",
+  "tijd": 20
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het hele team danst 10 seconden de Pietendans!",
+  "tijd": 20
+ },
+ {
+  "type": "beweging",
+  "tekst": "Alle teamleden staan op één been en tellen samen hardop tot 10!",
+  "tijd": 25
+ },
+ {
+  "type": "beweging",
+  "tekst": "Maak met het hele team samen een stoomboot met je armen en maak het geluid van de scheepstoeter!",
+  "tijd": 25
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het hele team loopt als Pieten op de plaats over het dak (zachtjes tippelen) en zegt: 'Ho ho ho!'",
+  "tijd": 20
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het team doet 10 keer samen een sprong alsof je een pakje door de schoorsteen gooit!",
+  "tijd": 25
+ }
+]

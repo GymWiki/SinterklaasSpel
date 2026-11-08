@@ -1,0 +1,172 @@
+[
+ {
+  "type": "rijm",
+  "tekst": "Maak een rijmpje van 2 regels met de woorden 'pakjesavond' en 'gezellig'.",
+  "antwoord": "De klas beslist of het rijmt!",
+  "tijd": 45
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 3 woorden die rijmen op 'letter'.",
+  "antwoord": "beter, meter, heter, netter",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Schrijf een kort gedichtje van 2 regels over een stoute Piet.",
+  "antwoord": "De klas beslist of het rijmt!",
+  "tijd": 45
+ },
+ {
+  "type": "rijm",
+  "tekst": "Noem 4 woorden die rijmen op 'boek'.",
+  "antwoord": "zoek, doek, hoek, koek, broek",
+  "tijd": 30
+ },
+ {
+  "type": "rijm",
+  "tekst": "Maak een rijmpje van 2 regels over huiswerk op pakjesavond.",
+  "antwoord": "De klas beslist of het rijmt!",
+  "tijd": 45
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Welke maand komt na november en is de maand van Sinterklaas?",
+  "antwoord": "December",
+  "tijd": 15
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Wat is zwaarder: een kilo pepernoten of een kilo veren?",
+  "antwoord": "Hetzelfde: allebei een kilo",
+  "tijd": 25
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Ik word nat terwijl ik droog maak. Wat ben ik?",
+  "antwoord": "Een handdoek",
+  "tijd": 30
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Een Piet heeft 3 zakken met elk 4 pakjes. Hij geeft de helft weg. Hoeveel houdt hij over?",
+  "antwoord": "6",
+  "tijd": 30
+ },
+ {
+  "type": "raadsel",
+  "tekst": "Welk getal komt er in de rij? 2, 4, 8, 16, ...",
+  "antwoord": "32",
+  "tijd": 25
+ },
+ {
+  "type": "reken",
+  "tekst": "Een pakje kost 12,50 euro. Hoeveel kosten 4 pakjes?",
+  "antwoord": "50 euro",
+  "tijd": 35
+ },
+ {
+  "type": "reken",
+  "tekst": "Hoeveel is 25% van 80?",
+  "antwoord": "20",
+  "tijd": 30
+ },
+ {
+  "type": "reken",
+  "tekst": "Hoeveel is 3/4 van 48?",
+  "antwoord": "36",
+  "tijd": 35
+ },
+ {
+  "type": "reken",
+  "tekst": "Er worden 144 pepernoten eerlijk verdeeld over 12 kinderen. Hoeveel krijgt ieder kind?",
+  "antwoord": "12",
+  "tijd": 30
+ },
+ {
+  "type": "reken",
+  "tekst": "Hoeveel is 15 x 12?",
+  "antwoord": "180",
+  "tijd": 35
+ },
+ {
+  "type": "taal",
+  "tekst": "Wat is een synoniem (ander woord met dezelfde betekenis) voor 'cadeau'?",
+  "antwoord": "Geschenk, kado",
+  "tijd": 25
+ },
+ {
+  "type": "taal",
+  "tekst": "Wat is het verleden tijd van 'wij geven' ('Gisteren ... wij')?",
+  "antwoord": "gaven",
+  "tijd": 20
+ },
+ {
+  "type": "taal",
+  "tekst": "Wat is het bijvoeglijk naamwoord in: 'De stoute Piet rent weg'?",
+  "antwoord": "stoute",
+  "tijd": 25
+ },
+ {
+  "type": "taal",
+  "tekst": "Noem 3 woorden die eindigen op '-heid'.",
+  "antwoord": "gezelligheid, blijheid, vrijheid...",
+  "tijd": 30
+ },
+ {
+  "type": "kennis",
+  "tekst": "Welke heilige bisschop is de basis voor het Sinterklaasverhaal?",
+  "antwoord": "Sint-Nicolaas van Myra",
+  "tijd": 30
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoe heet de krant of televisie-uitzending waarin Sinterklaas en zijn Pieten dagelijks op tv te zien zijn?",
+  "antwoord": "Het Sinterklaasjournaal",
+  "tijd": 25
+ },
+ {
+  "type": "kennis",
+  "tekst": "In welke eeuw leefde Sint-Nicolaas (ongeveer)?",
+  "antwoord": "4e eeuw",
+  "tijd": 35
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoe noemen we het verhaal dat Sinterklaas elk jaar met de boot aankomt?",
+  "antwoord": "De intocht",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoe heet het kinderlied: 'Zie ginds komt de ...'?",
+  "antwoord": "Stoomboot",
+  "tijd": 20
+ },
+ {
+  "type": "kennis",
+  "tekst": "Hoeveel provincies heeft Nederland?",
+  "antwoord": "12",
+  "tijd": 25
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het team verzint in 30 seconden een korte pantomime waarbij de klas moet raden welk cadeau het is!",
+  "tijd": 40
+ },
+ {
+  "type": "beweging",
+  "tekst": "Het team maakt in 20 seconden een menselijke pakjes-kring: iedereen houdt de hand van de buren vast en zegt om de beurt een rijmwoord.",
+  "tijd": 30
+ },
+ {
+  "type": "beweging",
+  "tekst": "Alle teamleden doen 15 seconden lang een stil-stilstaan-spel: wie beweegt, doet niet meer mee. Wie houdt het het langst vol?",
+  "tijd": 30
+ },
+ {
+  "type": "beweging",
+  "tekst": "Bedenk met je team in 30 seconden een Pietendans met 3 bewegingen en laat hem zien.",
+  "tijd": 40
+ }
+]

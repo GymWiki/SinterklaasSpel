@@ -37,9 +37,13 @@ export function Ring({ players, activeId, locks = [], mijter, highlight = [], ta
           <div key={p.id} className={cls} style={{ left: `${x}%`, top: `${y}%`, ['--c' as any]: p.color }}>
             <span className="seat-ic">{p.icon}</span>
             <span className="seat-nm">{p.name}</span>
-            {locks.includes(p.id) && <span className="badge lock" title="Slotje">🔒</span>}
-            {mijter === p.id && <span className="badge shield" title="Mijter">🛡️</span>}
-            {p.paused && <span className="badge zz">💤</span>}
+            {(locks.includes(p.id) || mijter === p.id || p.paused) && (
+              <span className="seat-badges">
+                {locks.includes(p.id) && <span className="pill lock"><span>🔒</span>{!mini && <b>Kluis</b>}</span>}
+                {mijter === p.id && <span className="pill shield"><span>🛡️</span>{!mini && <b>Mijter</b>}</span>}
+                {p.paused && <span className="pill zz"><span>💤</span></span>}
+              </span>
+            )}
           </div>
         );
       })}

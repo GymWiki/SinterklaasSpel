@@ -115,4 +115,4 @@ export interface GameState {
 
 export type FxName =
   | 'start' | 'dice' | 'reveal' | 'drum' | 'swap' | 'lock' | 'mijter' | 'shift' | 'reverse'
-  | 'bookreveal' | 'timerEnd' | 'tension' | 'falseAlarm' | 'horn' | 'piet' | 'round2' | 'next';
+  | 'diceFast' | 'finale' | 'bookreveal' | 'timerEnd' | 'tension' | 'falseAlarm' | 'horn' | 'piet' | 'round2' | 'next';

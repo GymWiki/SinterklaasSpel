@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 
-export function Confetti() {
+export function Confetti({ count = 220 }: { count?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current!;
@@ -14,7 +14,7 @@ export function Confetti() {
     };
     resize();
     window.addEventListener('resize', resize);
-    const P = Array.from({ length: 220 }, () => ({
+    const P = Array.from({ length: count }, () => ({
       x: Math.random() * w, y: -Math.random() * h, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 5,
       s: 6 + Math.random() * 10, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.3, c: colors[Math.floor(Math.random() * colors.length)],
     }));

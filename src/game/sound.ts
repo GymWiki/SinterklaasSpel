@@ -42,7 +42,7 @@ class Sfx {
     if (this.master) this.master.gain.value = m ? 0 : 0.8;
   }
 
-  private tone(f: number, dur: number, type: OscillatorType = 'sine', vol = 0.2, when = 0, slideTo?: number, lp?: number) {
+  private tone(f: number, dur: number, type: OscillatorType = 'sine', vol = 0.2, when = 0, slideTo?: number, lp?: number, attack = 0.02) {
     const c = this.ctx;
     if (!c || !this.master) return;
     const t = c.currentTime + when;
@@ -52,7 +52,7 @@ class Sfx {
     o.frequency.setValueAtTime(f, t);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, dur / 4));
+    g.gain.exponentialRampToValueAtTime(vol, t + Math.min(attack, dur / 3));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     let node: AudioNode = o;
     if (lp) {
@@ -87,10 +87,27 @@ class Sfx {
     src.start(t);
   }
 
-  private horn(dur: number, base = 110, vol = 0.22) {
-    // stoomboot-hoorn: drie gestapelde zaagtanden met lichte vibrato en lage cutoff
-    [1, 1.25, 1.5].forEach((m, i) => this.tone(base * m, dur, 'sawtooth', vol / (1 + i * 0.4), 0, base * m * 0.97, 700));
-    this.tone(base / 2, dur, 'sine', vol, 0);
+  /** Diepe stoomboot-scheepstoeter: gestapelde zaagtanden + sub-bas, trage aanzwelling, lage cutoff. */
+  private horn(dur: number, base = 98, vol = 0.22) {
+    [1, 1.5, 2].forEach((m, i) => this.tone(base * m, dur, 'sawtooth', vol / (1 + i * 0.5), 0, base * m * 0.96, 520, 0.35));
+    this.tone(base / 2, dur, 'sine', vol * 1.4, 0, undefined, undefined, 0.3);
+    this.tone(base * 1.01, dur, 'square', vol * 0.35, 0, base * 0.97, 380, 0.4);
+  }
+
+  /** Tromgeroffel + dobbelsteen-geratel dat precies stopt met een feestelijke "klap". */
+  private rollSound(sec: number) {
+    const n = Math.floor(sec / 0.045);
+    for (let i = 0; i < n; i++) {
+      const t = (i * sec) / n;
+      const k = t / sec;
+      this.noise(0.04, 0.1 + 0.2 * k, t, 1800 + Math.random() * 2600);
+      if (i % 2 === 0) this.tone(85, 0.07, 'sine', 0.1 + 0.16 * k, t);
+    }
+    this.noise(0.12, 0.45, sec, 300, 'lowpass');
+    this.tone(60, 0.5, 'sine', 0.55, sec, 32);
+    this.noise(0.7, 0.28, sec, 6000, 'highpass');
+    this.tone(660, 0.3, 'triangle', 0.14, sec + 0.03);
+    this.tone(880, 0.4, 'triangle', 0.12, sec + 0.1);
   }
 
   private fanfare(when = 0) {
@@ -107,7 +124,14 @@ class Sfx {
         this.fanfare();
         break;
       case 'dice':
-        for (let i = 0; i < 14; i++) this.noise(0.05, 0.25, i * 0.04 + i * i * 0.004, 2500 + Math.random() * 2500);
+        this.rollSound(1.8);
+        break;
+      case 'diceFast':
+        this.rollSound(0.7);
+        break;
+      case 'finale':
+        this.horn(3, 65, 0.36);
+        this.fanfare(2.4);
         break;
       case 'reveal':
         this.tone(660, 0.12, 'triangle', 0.2);
@@ -167,10 +191,22 @@ class Sfx {
   }
 
   /** Aftel-piepjes (per seconde). */
+  private tock = false;
   tick(secondsLeft: number, urgent = false) {
     if (!this.ready) return;
     const low = secondsLeft <= 3;
-    this.tone(low || urgent ? 1000 : 700, low ? 0.18 : 0.07, 'square', low ? 0.16 : 0.09);
+    this.tock = !this.tock;
+    if (low || urgent) {
+      this.tone(1000, 0.16, 'square', 0.17);
+      if (secondsLeft <= 3) this.tone(1500, 0.08, 'square', 0.1, 0.5); // dubbele tik: de klok versnelt
+    } else this.tone(this.tock ? 620 : 820, 0.06, 'square', 0.1); // tik-tak
+  }
+
+  /** Korte testtoon bij het activeren van het geluid. */
+  chirp() {
+    if (!this.ready) return;
+    this.tone(660, 0.12, 'triangle', 0.2);
+    this.tone(990, 0.2, 'triangle', 0.2, 0.12);
   }
 
   setMusic(mode: MusicMode) {

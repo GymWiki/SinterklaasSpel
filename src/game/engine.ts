@@ -312,7 +312,7 @@ export function roll(s: GameState, now: number, forceDie?: number): GameState {
   const built = s.phase === 'round1' ? buildRound1(s, die, t.activeId) : s.phase === 'round2' ? buildRound2(s, die, t.activeId) : buildRound3(s, die, t.activeId);
   const rollMs = inTurbo(s, now) ? ROLL_TURBO_MS : ROLL_MS;
   const turn: Turn = { ...t, stage: 'rolling', die, rollMs, revealAt: now + rollMs, pending: { task: built.task, effects: built.effects }, task: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, deadline: null };
-  return bump(s, { turn, decks: built.decks, book: built.book ?? s.book }, 'dice');
+  return bump(s, { turn, decks: built.decks, book: built.book ?? s.book }, rollMs === ROLL_TURBO_MS ? 'diceFast' : 'dice');
 }
 
 function applyEffects(s: GameState, effects: Effect[]): GameState {
@@ -390,6 +390,14 @@ export function startTimer(s: GameState, now: number): GameState {
   return bump(s, { turn: { ...t, timerStartsAt: now + COUNTDOWN_MS, timerEndsAt: now + COUNTDOWN_MS + t.task.timerSec * 1000 } }, 'next');
 }
 
+/** Host stopt de lopende klok van een opdracht (bijv. als de groep al een winnaar heeft). */
+export function stopTimer(s: GameState, now: number): GameState {
+  const t = s.turn;
+  if (!t || t.stage !== 'task' || !t.timerEndsAt || t.timerDone) return s;
+  void now;
+  return bump(s, { turn: { ...t, timerDone: true } });
+}
+
 export function canNext(s: GameState, now: number): boolean {
   const t = s.turn;
   if (!t || t.stage !== 'task' || !t.task) return false;
@@ -431,7 +439,7 @@ export function startRound3(s: GameState, now: number): GameState {
   const r3 = { startAt: now, endAt, falseAlarmAt: Math.min(falseAlarmAt, endAt - 20_000), falseAlarmDone: false, tensionStarted: false };
   const s2: GameState = { ...s, phase: 'round3', direction: 1, r3 };
   const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerStartsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: inTension(s2, now) ? now + TURN_LIMIT_MS : null };
-  return bump(s2, { turn, banner: { text: 'RONDE 3: DE GROTE FINALE!', until: now + 5000 } }, 'round2');
+  return bump(s2, { turn, banner: { text: 'RONDE 3: DE GROTE FINALE!', until: now + 5000 } }, 'finale');
 }
 
 export function resetToLobby(s: GameState): GameState {

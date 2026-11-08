@@ -23,6 +23,7 @@ export function Legend({ phase, die }: { phase: Phase; die: number | null }) {
   const l = LEGEND[phase];
   return (
     <aside className="legend" aria-label="Dobbelsteen-legenda">
+      <div className="legend-kicker">De Spelregels van deze Ronde</div>
       <div className="legend-title">{l.title}</div>
       <ol>
         {l.rows.map((text, i) => (

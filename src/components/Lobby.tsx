@@ -7,6 +7,7 @@ import { canStart, mergeSubmissions, removeSubmission, setSettings, startRound1 
 import { AUDIENCES } from '@/content/tags';
 import { pinKey, clearLocal } from '@/game/store';
 import { FEATURES } from '@/lib/features';
+import { sfx } from '@/game/sound';
 import type { GameState, Submission } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
@@ -29,6 +30,7 @@ const mask = (t: string) => t.replace(/\S/g, '▇').slice(0, 26);
 export function Lobby({ state: s, update, replace }: { state: GameState; update: Upd; replace: (s: GameState) => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [soundOn, setSoundOn] = useState(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const joinUrl = `${origin}/join/${s.roomId}`;
   const dups = useMemo(() => dupIds(s.submissions), [s.submissions]);
@@ -108,6 +110,9 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
         <h2>📺 TV-scherm</h2>
         <p>Open het TV-scherm in een <b>tweede tabblad of venster op dezelfde laptop</b> (en zet dat op de TV). Beide schermen synchroniseren automatisch, zonder internet of database.</p>
         <a className="btn primary" href={`/tv/${s.roomId}`} target="_blank" rel="noreferrer">📺 Open TV-scherm in nieuw tabblad</a>
+        <button className={`btn ${soundOn ? 'gold' : ''}`} onClick={() => { sfx.unlock(); setSoundOn(true); setTimeout(() => sfx.chirp(), 200); }}>
+          {soundOn ? '🔊 Geluid staat aan op dit apparaat' : '🔊 Activeer geluid op dit apparaat'}
+        </button>
         <p className="hint">Op het TV-scherm staat een grote knop &quot;🔊 Activeer TV-Scherm &amp; Geluid&quot; voor de geluidseffecten.</p>
       </section>
 

@@ -4,7 +4,7 @@ import { Ring } from './Ring';
 import { Dice } from './Dice';
 import { RichText } from './Rich';
 import { PlayersPanel } from './PlayersPanel';
-import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2, startRound3, startTimer, COUNTDOWN_MS } from '@/game/engine';
+import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, setPaused, startRound2, startRound3, startTimer, stopTimer } from '@/game/engine';
 import type { GameState } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
@@ -44,67 +44,58 @@ export function Controller({ state: s, update, now }: { state: GameState; update
   }
 
   if (!t || !active) return null;
+
+  const READY_LOCK_MS = 1200; // anti-vingerdikte: na "Volgende" is de gooi-knop heel even op slot
+  const readyLock = t.stage === 'ready' && now - t.startedAt < READY_LOCK_MS;
+  const timerRunning = !!(task?.timerSec && t.timerEndsAt && !t.timerDone);
+  const timerPending = !!(task?.timerSec && !t.timerEndsAt);
+  const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'round2' ? 'Ronde 2 · Uitpakken' : 'Ronde 3 · Finale';
+
   return (
-    <div className="stack">
-      <section className={`card turn-card ${inTension(s, now) ? 'tension' : ''}`} style={{ ['--c' as any]: active.color }}>
+    <div className="stack has-dock">
+      <section className={`card hud ${inTension(s, now) ? 'tension' : ''}`} style={{ ['--c' as any]: active.color }}>
         <div className="turn-top">
-          <span className="chip">{s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'round2' ? 'Ronde 2 · Uitpakken' : 'Ronde 3 · Finale'}</span>
+          <span className="chip">{roundLabel}</span>
           <span className="chip">{s.direction === 1 ? '↻ met de klok mee' : '↺ tegen de klok in'}</span>
           {s.phase === 'round3' && <span className="chip">🔒 {s.locks.length}{s.mijter ? ' · 🛡️' : ''}</span>}
         </div>
-
-        {t.stage === 'ready' && (
-          <>
-            <button className="btn roll" onClick={() => update(roll)}>
-              <span className="roll-ic">🎲</span>
-              Gooi Dobbelsteen voor <b style={{ color: active.color }}>{active.name}</b>
-            </button>
-            {deadlineLeft !== null && <div className={`piet ${deadlineLeft <= 5 ? 'urgent' : ''}`}>⏱️ Schiet op, Piet! Nog {deadlineLeft}s</div>}
-          </>
-        )}
-
-        {t.stage === 'rolling' && (
-          <div className="rolling-box">
-            <Dice value={t.die} rolling={rolling} ms={t.rollMs} />
-            <button className="btn roll" disabled>🎲 De dobbelsteen rolt...</button>
+        <div className="hud-who">
+          <span className="hud-ic">{active.icon}</span>
+          <div>
+            <small>Aan de beurt</small>
+            <b style={{ color: active.color }}>{active.name}</b>
           </div>
-        )}
-
-        {t.stage === 'task' && task && (
-          <>
-            <div className="task-card">
-              <div className="task-tag">{task.emoji} {task.title}</div>
-              <div className="task-main"><RichText rich={book ? task.main : task.main} players={s.players} /></div>
-              {book && !drum && <blockquote className="quote">{book.card.type === 'dilemma' ? book.card.content : `“${book.card.content}”`}</blockquote>}
-              {book && drum && <p className="hint">🥁 Tromgeroffel...</p>}
-              {task.sub && <div className="task-sub"><RichText rich={task.sub} players={s.players} /></div>}
-              {book?.stage === 'revealed' && book.reveal && <div className="reveal"><RichText rich={book.reveal} players={s.players} /></div>}
-              {task.foot && <div className="task-sub">{task.foot}</div>}
-              {task.timerSec && t.timerStartsAt && now < t.timerStartsAt && <div className="timer-sm">Klaar? {Math.ceil((t.timerStartsAt - now) / 1000)}...</div>}
-              {task.timerSec && !t.timerDone && t.timerStartsAt && now >= t.timerStartsAt && t.timerEndsAt && <div className="timer-sm">⏱️ {Math.max(0, Math.ceil((t.timerEndsAt - now) / 1000))}s</div>}
-              {t.timerDone && task.timerSec && <div className="timer-sm">⏰ Tijd is om!</div>}
-            </div>
-
-            {task.timerSec && !t.timerEndsAt && (
-              <button className="btn clock-btn" onClick={() => update(startTimer)}>▶️ Start klok ({task.timerSec}s)<small>Eerst rustig lezen, dan 3-2-1-GO!</small></button>
-            )}
-            {book && book.stage === 'riddle' && (
-              <button className="btn reveal-btn" disabled={drum} onClick={() => update(revealBook)}>👀 Onthul de schuldige</button>
-            )}
-            <button className="btn next-btn" disabled={!nextOk} onClick={() => update(next)}>
-              {nextOk ? <>Volgende Speler ➡️ <b>{nextP?.name}</b></> : book && book.stage === 'riddle' ? 'Eerst de schuldige onthullen...' : 'Even wachten...'}
-            </button>
-          </>
+        </div>
+        {deadlineLeft !== null && <div className={`piet ${deadlineLeft <= 5 ? 'urgent' : ''}`}>⏱️ Schiet op, Piet! Nog {deadlineLeft}s</div>}
+        {t.stage === 'ready' && (
+          <button className="btn small ghost hud-pause" onClick={() => update((st) => setPaused(st, active.id, true))}>⏸️ {active.name} even pauzeren (wc)</button>
         )}
       </section>
 
+      {t.stage === 'rolling' && (
+        <section className="card rolling-box">
+          <Dice value={t.die} rolling={rolling} ms={t.rollMs} />
+        </section>
+      )}
+
+      {t.stage === 'task' && task && (
+        <section className="card task-card">
+          <div className="task-tag">{task.emoji} {task.title}</div>
+          <div className="task-main"><RichText rich={task.main} players={s.players} /></div>
+          {book && !drum && <blockquote className="quote">{book.card.type === 'dilemma' ? book.card.content : `“${book.card.content}”`}</blockquote>}
+          {book && drum && <p className="hint">🥁 Tromgeroffel...</p>}
+          {task.sub && <div className="task-sub"><RichText rich={task.sub} players={s.players} /></div>}
+          {task.foot && <div className="task-sub">{task.foot}</div>}
+          {book?.stage === 'revealed' && book.reveal && <div className="reveal"><RichText rich={book.reveal} players={s.players} /></div>}
+          {task.timerSec && t.timerStartsAt && now < t.timerStartsAt && <div className="timer-sm">Klaar? {Math.ceil((t.timerStartsAt - now) / 1000)}...</div>}
+          {timerRunning && t.timerStartsAt && now >= t.timerStartsAt && t.timerEndsAt && <div className="timer-sm">⏱️ {Math.max(0, Math.ceil((t.timerEndsAt - now) / 1000))}s</div>}
+          {t.timerDone && task.timerSec && <div className="timer-sm">⏰ Tijd is om!</div>}
+        </section>
+      )}
+
       {s.phase === 'round1' && (
         <section className="card">
-          <button
-            className={`btn big ${armed === 'r2' ? 'danger' : 'ghost'}`}
-            disabled={t.stage === 'rolling'}
-            onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}
-          >
+          <button className={`btn big ${armed === 'r2' ? 'danger' : 'ghost'}`} disabled={t.stage === 'rolling'} onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}>
             {armed === 'r2' ? 'Zeker weten? Tik nogmaals!' : 'Stapel is leeg → Start Ronde 2 (Uitpakken)'}
           </button>
         </section>
@@ -112,11 +103,7 @@ export function Controller({ state: s, update, now }: { state: GameState; update
 
       {s.phase === 'round2' && (
         <section className="card">
-          <button
-            className={`btn big ${armed === 'r3' ? 'danger' : 'ghost'}`}
-            disabled={t.stage === 'rolling'}
-            onClick={() => (armed === 'r3' ? (setArmed(''), update(startRound3)) : setArmed('r3'))}
-          >
+          <button className={`btn big ${armed === 'r3' ? 'danger' : 'ghost'}`} disabled={t.stage === 'rolling'} onClick={() => (armed === 'r3' ? (setArmed(''), update(startRound3)) : setArmed('r3'))}>
             {armed === 'r3' ? 'Zeker weten? Tik nogmaals om de finale te starten!' : 'Alles is uitgepakt → Start De Finale (Ronde 3)'}
           </button>
         </section>
@@ -128,6 +115,33 @@ export function Controller({ state: s, update, now }: { state: GameState; update
         {panel && <PlayersPanel state={s} update={update} />}
         <a className="linkbtn" href={`/tv/${s.roomId}`} target="_blank" rel="noreferrer">📺 TV-scherm openen</a>
       </section>
+
+      {/* Één-duims bediening: de primaire actie zit altijd vast onderaan */}
+      <div className="dock">
+        {t.stage === 'task' && timerPending && (
+          <button className="btn clock-btn" onClick={() => update(startTimer)}>▶️ Start klok ({task!.timerSec}s)<small>Eerst rustig lezen, dan 3-2-1-GO!</small></button>
+        )}
+        {t.stage === 'task' && timerRunning && (
+          <button className="btn clock-stop" onClick={() => update(stopTimer)}>⏹ Stop klok</button>
+        )}
+        {t.stage === 'task' && book && book.stage === 'riddle' && (
+          <button className="btn reveal-btn" disabled={drum} onClick={() => update(revealBook)}>👀 Onthul de schuldige</button>
+        )}
+
+        {t.stage === 'ready' && (
+          <button className="btn primary-act roll-act" disabled={readyLock} onClick={() => update(roll)}>
+            {readyLock ? <><span className="spin" /> Even wachten...</> : <><span className="act-ic">🎲</span> GOOI VOOR <b>{active.name.toUpperCase()}</b></>}
+          </button>
+        )}
+        {t.stage === 'rolling' && (
+          <button className="btn primary-act roll-act" disabled><span className="spin" /> Dobbelen...</button>
+        )}
+        {t.stage === 'task' && (
+          <button className="btn primary-act next-act" disabled={!nextOk} onClick={() => update(next)}>
+            {nextOk ? <>VOLGENDE SPELER ➡️ <b>{nextP?.name.toUpperCase()}</b></> : <><span className="spin" /> {book && book.stage === 'riddle' ? 'Eerst onthullen...' : 'Even wachten...'}</>}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

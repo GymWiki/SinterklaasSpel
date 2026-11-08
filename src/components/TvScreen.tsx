@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Ring } from './Ring';
 import { Dice } from './Dice';
 import { RichText } from './Rich';
@@ -26,15 +26,34 @@ function Boat({ s, now }: { s: GameState; now: number }) {
   );
 }
 
+/** Cirkel-countdown: groen -> oranje -> knipperend rood. */
 function TimerRing({ left, total }: { left: number; total: number }) {
   const f = Math.max(0, Math.min(1, left / total));
+  const tone = f > 0.5 ? 'ok' : f > 0.25 ? 'warn' : 'hot';
   return (
-    <div className={`timer ${left <= 3 ? 'urgent' : ''}`}>
+    <div className={`timer ${tone}`}>
       <svg viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="44" className="t-bg" />
         <circle cx="50" cy="50" r="44" className="t-fg" pathLength={100} strokeDasharray="100" strokeDashoffset={100 - f * 100} />
       </svg>
       <span>{Math.max(0, Math.ceil(left))}</span>
+    </div>
+  );
+}
+
+/** Zachte achtergrond: vallende sterren, sneeuw en pepernoten. */
+const AMBIENT = Array.from({ length: 26 }, (_, i) => {
+  const r = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
+  return { ch: ['✨', '❄️', '⭐', '🍪', '❄️', '✨'][i % 6], left: r(1) * 100, size: 1.6 + r(2) * 2.2, dur: 16 + r(3) * 18, delay: -r(4) * 30, sway: 2 + r(5) * 4 };
+});
+function Ambient() {
+  return (
+    <div className="ambient" aria-hidden>
+      <div className="glow glow-l" />
+      <div className="glow glow-r" />
+      {AMBIENT.map((a, i) => (
+        <span key={i} className="flake" style={{ left: `${a.left}%`, fontSize: `${a.size}vmin`, animationDuration: `${a.dur}s`, animationDelay: `${a.delay}s`, ['--sway' as any]: `${a.sway}vmin` }}>{a.ch}</span>
+      ))}
     </div>
   );
 }
@@ -101,6 +120,18 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
     return () => document.removeEventListener('fullscreenchange', on);
   }, []);
 
+  const [burstUntil, setBurstUntil] = useState(0);
+  const lastFx = useRef<number | null>(null);
+  useEffect(() => {
+    const id = s.fx?.id ?? 0;
+    if (lastFx.current === null) { lastFx.current = id; return; }
+    if (id > lastFx.current) {
+      lastFx.current = id;
+      // confetti bij start van Ronde 3 (finale) en bij het winnen van een Kluis
+      if (s.fx && (s.fx.name === 'finale' || s.fx.name === 'lock')) setBurstUntil(Date.now() + 4500);
+    }
+  }, [s.fx?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const t = s.turn;
   const active = t ? playerById(s, t.activeId) : undefined;
   const task = t?.task ?? null;
@@ -125,6 +156,7 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
 
   return (
     <div className={`tv ${tension ? 'tension' : ''} ${turbo ? 'turbo' : ''}`}>
+      <Ambient />
       <header className="tv-top">
         <div className="tv-title">🎅 {roundLabel}</div>
         <Boat s={s} now={now} />
@@ -195,6 +227,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
       <footer className="tv-foot">{t?.stage === 'task' && task?.foot ? task.foot : ''}</footer>
 
       {t?.stage === 'task' && task?.book && s.phase !== 'finished' && <BookOverlay s={s} task={task} now={now} />}
+
+      {now < burstUntil && s.phase !== 'finished' && <div className="burst"><Confetti count={160} /></div>}
 
       {s.banner && now <= s.banner.until && <div className="banner">{s.banner.text}</div>}
 

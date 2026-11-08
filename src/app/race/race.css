@@ -62,7 +62,7 @@
 .race-legend { align-self: center; }
 .race-legend .legend-kicker { font-size: 1.9vmin; }
 .race-legend li { font-size: 2.2vmin; }
-.race-dice { width: 34vmin; height: 34vmin; display: grid; place-items: center; container-type: size; }
+.race-dice { margin-top: 6vmin; width: 34vmin; height: 34vmin; display: grid; place-items: center; container-type: size; }
 .race-dice .dice3d { --s: 24vmin; }
 .r-roller { font-size: 6.4vmin; font-weight: 900; color: var(--c); text-shadow: 0 0 2vmin #0008; }
 .r-msg { font-size: 3.8vmin; font-weight: 800; background: #ffffff14; padding: 1.4vmin 2.6vmin; border-radius: 2vmin; max-width: 90%; animation: pop 0.5s; }
@@ -85,7 +85,7 @@
 .r-unwrap h2 { font-size: 7vmin; margin: 0; color: var(--c); font-family: var(--sans); font-weight: 900; }
 .r-pakjes { display: flex; gap: 1.6vmin; flex-wrap: wrap; justify-content: center; }
 .r-pakje { width: 14vmin; height: 14vmin; border-radius: 2vmin; background: #ffffff14; border: 0.6vmin solid #ffffff44; display: grid; place-items: center; align-content: center; font-size: 5.6vmin; transition: transform 0.4s; }
-.r-pakje small { font-size: 2.4vmin; font-weight: 900; }
+.r-pakje small { font-size: 3.4vmin; font-weight: 900; }
 .r-pakje.open { background: #fdf3d8; color: #2b1013; border-color: var(--gold); animation: pop 0.6s; }
 .r-pakje.gold { background: linear-gradient(#fde68a, #f59e0b); box-shadow: 0 0 3vmin #fbbf24; }
 .r-pakje.pech { background: #fecaca; }
@@ -122,3 +122,4 @@
   .race-bar { grid-template-columns: 1fr; }
   .rs-opts { grid-template-columns: 1fr; } .rs-team { grid-template-columns: 30px 1fr; } .rs-team .rs-select { grid-column: 2; }
 }
+.r-compact { gap: 1.2vmin; } .r-compact .r-colorpiet { width: 12vmin; height: 12vmin; } .r-compact .r-colorpiet b { font-size: 2.6vmin; } .r-compact .r-resulttext { font-size: 3.6vmin; } .r-compact .r-arrow { font-size: 14vmin; }

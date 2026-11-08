@@ -46,3 +46,12 @@ pagina's `/nieuw` en `/join/[roomId]` en de Drizzle-tabellen (`rooms`, `submissi
 - `src/game/engine.ts` – pure GameEngine (Smart Decks, zitkring, Kluis/Mijter, Grote Boek, geheime eindtijd, Schiet-op-Piet, vals alarm, turbo, einde).
 - `src/game/store.ts` – localStorage-herstel (F5-proof), sync, Wake Lock. `src/game/sound.ts` – alle geluid live gesynthetiseerd.
 - `src/content/*` – opdrachten, prikkelvragen, aanloopzinnen, stellingen en Grote Boek-fallbacks per doelgroep.
+
+## De Pietenpakjes-race (klas-spel, `/race`)
+
+Een apart spel voor de basisschool (groep 3-8), volledig offline in de browser (stand in `localStorage`, een refresh raakt niets kwijt).
+
+- **Digitaal:** 4-6 teams, Pietenvraag met timer (30 sec, +15 sec) -> goede teams dobbelen -> troostpakje voor foute teams. Verborgen pakjeswaardes (1-5 pepernoten, Pietenpech 0, Gouden pakje 8), finale met trommelroffel, confetti en bijzondere prijzen.
+- **Met echte pakjes:** de hele klas in een kring, de tv zegt wat iedereen doet (links, rechts, overbuur, Kleurenpiet, Pietenvraag, Sinterklaas). Altijd ruilen, nooit afpakken.
+- **Bediening:** spatiebalk = volgende fase, `U` terugdraaien, `P` pauze, `+` 15 sec erbij, `N` andere vraag. Alles ook met grote knoppen.
+- **Code:** engines in `src/race/digital.ts` en `src/race/real.ts` (pure state machines, geen UI), seedbare random in `src/race/common.ts` (`/race?seed=7` geeft hetzelfde spel), vragen in `src/race/questions/*.json` (type, tekst, antwoord, tijd).

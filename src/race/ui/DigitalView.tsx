@@ -40,7 +40,7 @@ function Unwrap({ team }: { team: D.Team }) {
       <div className="r-pakjes">
         {team.pakjes.map((p, i) => (
           <div key={p.id} className={`r-pakje ${i < shown ? 'open' : ''} ${p.v === 8 ? 'gold' : p.v === 0 ? 'pech' : ''}`}>
-            {i < shown ? (p.v === 0 ? <><span>💥</span><small>Pietenpech!</small></> : p.v === 8 ? <><span>🌟</span><small>GOUD 8</small></> : <><span>{'🍪'.repeat(p.v)}</span><small>{p.v}</small></>) : <span>🎁</span>}
+            {i < shown ? (p.v === 0 ? <><span>💥</span><small>Pietenpech!</small></> : p.v === 8 ? <><span>🌟</span><small>GOUD 8</small></> : <><span>🍪</span><small>× {p.v}</small></>) : <span>🎁</span>}
           </div>
         ))}
       </div>

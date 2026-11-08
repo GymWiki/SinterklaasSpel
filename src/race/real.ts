@@ -98,7 +98,6 @@ export function roll(s: Real, now: number): Real {
 
 function resolve(s: Real): Real {
   const die = s.die!;
-  const names = (ids: string[]) => ids.map((id) => kidName(s, id)).join(', ');
   switch (die) {
     case 1: return { ...s, phase: 'result', rollPending: false, result: { die, title: 'Alles naar links', arrow: 'left', text: 'Iedereen geeft zijn pakje door aan de buurman LINKS van zich!' } };
     case 2: return { ...s, phase: 'result', rollPending: false, result: { die, title: 'Alles naar rechts', arrow: 'right', text: 'Iedereen geeft zijn pakje door aan de buurman RECHTS van zich!' } };
@@ -141,11 +140,11 @@ function resolve(s: Real): Real {
     }
     case 5: {
       const [chosen, s2] = pickKids(s, 3);
-      return { ...s2, phase: 'result', rollPending: false, qDone: true, result: { die, title: 'Pietenvraag', chosen, text: `${names(chosen)}: wie goed antwoordt mag met een kind naar keuze ruilen!` } };
+      return { ...s2, phase: 'result', rollPending: false, qDone: true, result: { die, title: 'Pietenvraag', chosen, text: 'Wie van hen goed antwoordt, mag met een kind naar keuze ruilen!' } };
     }
     default: {
       const [chosen, s2] = pickKids(s, 3);
-      return { ...s2, phase: 'result', rollPending: false, result: { die, title: 'Sinterklaas!', chosen, text: `${names(chosen)} mogen met IEDEREEN ruilen die ze willen!` } };
+      return { ...s2, phase: 'result', rollPending: false, result: { die, title: 'Sinterklaas!', chosen, text: 'Deze kinderen mogen met IEDEREEN ruilen die ze willen!' } };
     }
   }
 }

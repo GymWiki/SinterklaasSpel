@@ -29,7 +29,7 @@ function Boat({ s, now }: { s: GameState; now: number }) {
 /** Cirkel-countdown: groen -> oranje -> knipperend rood. */
 function TimerRing({ left, total }: { left: number; total: number }) {
   const f = Math.max(0, Math.min(1, left / total));
-  const tone = f > 0.5 ? 'ok' : f > 0.25 ? 'warn' : 'hot';
+  const tone = f > 0.5 ? 'tone-ok' : f > 0.25 ? 'tone-warn' : 'tone-hot';
   return (
     <div className={`timer ${tone}`}>
       <svg viewBox="0 0 100 100">

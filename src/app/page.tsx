@@ -47,6 +47,12 @@ export default function Home() {
         </section>
 
         <section className="card">
+          <h2>🏫 De Pietenpakjes-race</h2>
+          <p>Een spel voor in de klas (basisschool): teams beantwoorden Pietenvragen, of de hele klas ruilt echte pakjes in een kring. Bediening met de spatiebalk.</p>
+          <a className="btn primary" href="/race">Naar de race</a>
+        </section>
+
+        <section className="card">
           <h2>⚡ Snel testen / Demo-modus</h2>
           <p>Laad met één klik een voorbeeldspel met 6 spelers in een zitkring.</p>
           <button

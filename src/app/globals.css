@@ -401,10 +401,10 @@ h1, h2, .tv-title, .legend-title, .legend-kicker, .banner, .finish h1, .finish h
 @keyframes shock { from { transform: scale(0.7); opacity: 1; } to { transform: scale(2.1); opacity: 0; } }
 
 /* Aftelklok: groen -> oranje -> knipperend rood */
-.timer .t-fg { transition: stroke 0.3s, stroke-dashoffset 0.25s linear; filter: drop-shadow(0 0 0.8vmin currentColor); }
-.timer.ok { color: #4ade80; } .timer.ok .t-fg { stroke: #4ade80; }
-.timer.warn { color: #f59e0b; } .timer.warn .t-fg { stroke: #f59e0b; }
-.timer.hot { color: #ef4444; animation: hotblink 0.5s steps(2, jump-none) infinite; } .timer.hot .t-fg { stroke: #ef4444; }
+.timer .t-fg { transition: stroke 0.3s, stroke-dashoffset 0.25s linear; }
+.timer.tone-ok { color: #4ade80; } .timer.tone-ok .t-fg { stroke: #4ade80; }
+.timer.tone-warn { color: #f59e0b; } .timer.tone-warn .t-fg { stroke: #f59e0b; }
+.timer.tone-hot { color: #ef4444; animation: hotblink 0.5s steps(2, jump-none) infinite; } .timer.tone-hot .t-fg { stroke: #ef4444; }
 .timer span { color: #fff7e6; }
 @keyframes hotblink { 0% { filter: brightness(1); transform: scale(1); } 100% { filter: brightness(1.6); transform: scale(1.07); } }
 .burst { position: absolute; inset: 0; z-index: 55; pointer-events: none; }

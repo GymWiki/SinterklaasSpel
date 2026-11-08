@@ -128,10 +128,10 @@ export function Lobby({ state: s, update, replace }: { state: GameState; update:
             </button>
           ))}
         </div>
-        <label className="lbl">Speelduur Ronde 2 (de echte eindtijd blijft geheim, ±13%)</label>
+        <label className="lbl">Speelduur Ronde 3 / de finale (de echte eindtijd blijft geheim, ±13%)</label>
         <div className="seg">
           {[...(s.isDemo ? [3] : []), 20, 30, 45].map((m) => (
-            <button key={m} className={s.settings.r2Minutes === m ? 'on' : ''} onClick={() => update((st) => setSettings(st, { r2Minutes: m }))}>{m} min{m === 3 ? ' (test)' : ''}</button>
+            <button key={m} className={s.settings.r3Minutes === m ? 'on' : ''} onClick={() => update((st) => setSettings(st, { r3Minutes: m }))}>{m} min{m === 3 ? ' (test)' : ''}</button>
           ))}
         </div>
       </section>

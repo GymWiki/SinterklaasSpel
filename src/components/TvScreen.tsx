@@ -12,9 +12,9 @@ import type { GameState, Task } from '@/game/types';
 
 function Boat({ s, now }: { s: GameState; now: number }) {
   let p = 0;
-  if (s.phase === 'round2' && s.r2) {
-    const total = s.settings.r2Minutes * 60_000 * 1.14; // nooit de echte eindtijd verklappen
-    p = Math.min(0.9, Math.max(0, (now - s.r2.startAt) / total));
+  if (s.phase === 'round3' && s.r3) {
+    const total = s.settings.r3Minutes * 60_000 * 1.14; // nooit de echte eindtijd verklappen
+    p = Math.min(0.9, Math.max(0, (now - s.r3.startAt) / total));
   } else if (s.phase === 'finished') p = 1;
   return (
     <div className="boat-track" aria-hidden>
@@ -110,7 +110,7 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
 
   const deadlineLeft = t?.stage === 'ready' && t.deadline ? (t.deadline - now) / 1000 : null;
   const timerLeft = t?.stage === 'task' && t.timerEndsAt && !t.timerDone ? (t.timerEndsAt - now) / 1000 : null;
-  const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'unwrap' ? 'Uitpak-moment!' : s.phase === 'round2' ? (tension ? 'Ronde 2 · De ontknoping!' : 'Ronde 2 · De Finale') : s.phase === 'finished' ? 'Einde!' : 'Pakjesavond Live';
+  const roundLabel = s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'round2' ? 'Ronde 2 · Uitpakken & Kijken' : s.phase === 'round3' ? (tension ? 'Ronde 3 · De ontknoping!' : 'Ronde 3 · De Grote Finale') : s.phase === 'finished' ? 'Einde!' : 'Pakjesavond Live';
 
   return (
     <div className={`tv ${tension ? 'tension' : ''} ${turbo ? 'turbo' : ''}`}>
@@ -118,7 +118,7 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
         <div className="tv-title">🎅 {roundLabel}</div>
         <Boat s={s} now={now} />
         <div className="tv-status">
-          {s.phase !== 'lobby' && s.phase !== 'round1' && <span title="Slotjes">🔒 {s.locks.length}</span>}
+          {(s.phase === 'round3' || s.phase === 'finished') && <span title="Slotjes">🔒 {s.locks.length}</span>}
           {s.mijter && <span title="Mijter">🛡️ {playerById(s, s.mijter)?.name}</span>}
           <span>{s.direction === 1 ? '↻' : '↺'}</span>
         </div>
@@ -126,8 +126,8 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
 
       <main className="tv-main">
         <section className="tv-ring">
-          <Ring players={s.players} activeId={s.phase === 'lobby' || s.phase === 'unwrap' || s.phase === 'finished' ? null : t?.activeId} locks={s.locks} mijter={s.mijter} highlight={task?.highlight ?? []} targetId={task?.book?.targetId} direction={s.direction} arrow={task?.arrow}>
-            {s.phase === 'lobby' || s.phase === 'unwrap' ? <div className="center-logo">🎁</div> : s.phase === 'finished' ? <div className="center-logo">🚢</div> : <Dice value={t?.die ?? null} rolling={rolling} ms={t?.rollMs} idle />}
+          <Ring players={s.players} activeId={s.phase === 'lobby' || s.phase === 'finished' ? null : t?.activeId} locks={s.locks} mijter={s.mijter} highlight={task?.highlight ?? []} targetId={task?.book?.targetId} direction={s.direction} arrow={task?.arrow}>
+            {s.phase === 'lobby' ? <div className="center-logo">🎁</div> : s.phase === 'finished' ? <div className="center-logo">🚢</div> : <Dice value={t?.die ?? null} rolling={rolling} ms={t?.rollMs} idle />}
           </Ring>
         </section>
 
@@ -149,23 +149,16 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
             </div>
           )}
 
-          {s.phase === 'unwrap' && (
-            <div className="panel-lobby">
-              <h1>🎉 Uitpak-moment!</h1>
-              <p className="big">Iedereen pakt nu <b>alle ingepakte cadeaus</b> uit!</p>
-              <p className="small">Daarna start de grote finale met de stoomboot. Wanneer die aankomt? Dat weet alleen Sinterklaas...</p>
-            </div>
-          )}
-
-          {(s.phase === 'round1' || s.phase === 'round2') && t && active && (
+          {(s.phase === 'round1' || s.phase === 'round2' || s.phase === 'round3') && t && active && (
             <div className="panel-turn">
+              {s.phase !== 'round3' && <div className="goal">🎯 {s.phase === 'round1' ? 'Ronde 1: verdeel alle cadeaus van de stapel' : 'Ronde 2: Pak alle cadeaus uit!'}</div>}
               <div className="turn-who" style={{ color: active.color }}>
                 <span>{active.icon}</span> {active.name}
               </div>
               {t.stage === 'ready' && (
                 <>
                   <div className="turn-hint">{tension ? 'Schiet op, Piet! Gooi de dobbelsteen!' : 'is aan de beurt. Gooi de dobbelsteen!'}</div>
-                  {deadlineLeft !== null && <TimerRing left={deadlineLeft} total={25} />}
+                  {deadlineLeft !== null && <TimerRing left={deadlineLeft} total={20} />}
                 </>
               )}
               {t.stage === 'rolling' && <div className="turn-hint pulse">De dobbelsteen rolt...</div>}
@@ -185,8 +178,6 @@ export function TvScreen({ state: s, now }: { state: GameState; now: number }) {
       </main>
 
       {t?.stage === 'task' && task?.book && s.phase !== 'finished' && <BookOverlay s={s} task={task} now={now} />}
-
-      {s.phase === 'unwrap' && <Confetti />}
 
       {s.banner && now <= s.banner.until && <div className="banner">{s.banner.text}</div>}
 

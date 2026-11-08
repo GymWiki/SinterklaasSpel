@@ -7,8 +7,9 @@
  */
 import { forAudience, type Audience } from '@/content/tags';
 import { R1_FIXED, type TaskTpl } from '@/content/round1';
+import { R2_BALANCE, R2_DUEL_SUB, R2_NEIGHBOR, R2_OPPOSITE, R2_UNWRAP } from '@/content/round2';
 import { FEATURES } from '@/lib/features';
-import { R2_BIGCHAIRS, R2_BONUS, R2_CHAIRS, R2_DOUBLE, R2_MIJTER, R2_REVERSE, R2_SHIFT, R2_STEAL, R2_SWAP, R2_VAULT } from '@/content/round2';
+import { R3_BIGCHAIRS, R3_BONUS, R3_CHAIRS, R3_DOUBLE, R3_DUEL_SUB, R_DUELS, R3_MIJTER, R3_REVERSE, R3_SHIFT, R3_STEAL, R3_SWAP, R3_VAULT } from '@/content/round3';
 import { BOOK_FALLBACK, BOOK_FALLBACK_REVEAL } from '@/content/book';
 import { GENERAL_TARGET } from '@/lib/constants';
 import type {
@@ -21,7 +22,7 @@ export const COLORS = [
 ];
 export const ICONS = ['🎅', '🤶', '🧝', '🦌', '⛄', '🎁', '🍪', '🥜', '🎄', '⭐', '🚢', '👑', '🐴', '🔔', '🍬', '🧦'];
 
-export const TURN_LIMIT_MS = 25_000;
+export const TURN_LIMIT_MS = 20_000;
 export const TENSION_MS = 5 * 60_000;
 export const TURBO_MS = 2 * 60_000;
 export const ROLL_MS = 1800;
@@ -57,12 +58,12 @@ export function createState(roomId: string, names: string[], submissions: Submis
   const players: Player[] = [];
   names.forEach((n, i) => players.push(makePlayer(n, i, players)));
   return {
-    v: 1, rev: 1, roomId, isDemo, phase: 'lobby',
-    settings: { audience: 'mixed', r2Minutes: 30 },
+    v: 2, rev: 1, roomId, isDemo, phase: 'lobby',
+    settings: { audience: 'mixed', r3Minutes: 30 },
     players, submissions, removedIds: [], loadedAt: Date.now(),
     direction: 1, locks: [], mijter: null, turn: null, turnCount: 0, decks: {}, youngestId: null,
     book: { queue: [], usedIds: [], lastTargets: [], fallback: { queue: [], last: null } },
-    r2: null, banner: null, fx: null,
+    r3: null, banner: null, fx: null,
   };
 }
 
@@ -101,8 +102,8 @@ export function nextActiveId(s: GameState, fromId: string, dir: 1 | -1 = s.direc
   return fromId;
 }
 
-export const inTension = (s: GameState, now: number) => s.phase === 'round2' && !!s.r2 && now >= s.r2.endAt - TENSION_MS;
-export const inTurbo = (s: GameState, now: number) => s.phase === 'round2' && !!s.r2 && now >= s.r2.endAt - TURBO_MS;
+export const inTension = (s: GameState, now: number) => s.phase === 'round3' && !!s.r3 && now >= s.r3.endAt - TENSION_MS;
+export const inTurbo = (s: GameState, now: number) => s.phase === 'round3' && !!s.r3 && now >= s.r3.endAt - TURBO_MS;
 
 /* ---------- Smart Deck ---------- */
 
@@ -168,25 +169,58 @@ function buildRound1(s: GameState, die: number, activeId: string): Built {
   return { task, effects: [], decks: s.decks };
 }
 
-const dirText = (d: 1 | -1) => (d === 1 ? 'met de klok mee' : 'tegen de klok in');
-
 function buildRound2(s: GameState, die: number, activeId: string): Built {
   const c = seatContext(s, activeId);
   const slots = slotsOf(c);
+  const mk = (kind: TaskKind, title: string, emoji: string, tpl: TaskTpl, hl: string[], sl = slots): Task => ({
+    kind, title, emoji, main: rich(tpl.t, sl), sub: tpl.sub ? rich(tpl.sub, sl) : undefined, timerSec: tpl.timer, highlight: hl,
+  });
+  if (die === 1 || die === 6) {
+    const { tpl, decks } = pickTpl(s, 'r2:unwrap', R2_UNWRAP);
+    return { task: mk('unwrap', 'UITPAKKEN!', '🎁', tpl, [c.A.id]), effects: [], decks };
+  }
+  if (die === 2) {
+    const { tpl, decks } = pickTpl(s, 'r2:neighbor', R2_NEIGHBOR);
+    return { task: mk('neighbor', 'BUREN-RUIL', '🔄', tpl, [c.A.id, tpl.focus === 'R' ? c.R.id : c.L.id]), effects: [], decks };
+  }
+  if (die === 3) {
+    const { tpl, decks } = pickTpl(s, 'r2:opposite', R2_OPPOSITE);
+    return { task: mk('opposite', 'OVERKANT-WISSEL', '↔️', tpl, [c.A.id, c.O.id]), effects: [], decks };
+  }
+  if (die === 4) {
+    const X = c.X;
+    const { tpl, decks } = pickTpl(s, 'r2:duel', R_DUELS);
+    const sl = { A: c.A.id, X: X.id };
+    const task = mk('duel', '10-SECONDEN DUEL', '⚔️', { ...tpl, sub: R2_DUEL_SUB }, [c.A.id, X.id], sl);
+    return { task, effects: [], decks };
+  }
+  const { tpl, decks } = pickTpl(s, 'r2:balance', R2_BALANCE);
+  return { task: mk('balance', 'CADEAU-BALANS', '⚖️', tpl, [c.A.id]), effects: [], decks };
+}
+
+const dirText = (d: 1 | -1) => (d === 1 ? 'met de klok mee' : 'tegen de klok in');
+
+function buildRound3(s: GameState, die: number, activeId: string): Built {
+  const c = seatContext(s, activeId);
+  const slots = slotsOf(c);
   const m = activePlayers(s).length;
-  let kind: 'steal' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'chaos' | 'book';
+  let kind: 'steal' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'duel' | 'chaos' | 'book';
   switch (die) {
-    case 1: kind = 'steal'; break;
-    case 2: kind = 'swap'; break;
-    case 3: kind = 'shift'; break;
-    case 4: kind = rand() < 0.5 ? 'vault' : 'mijter'; break;
-    case 5: kind = rand() < 0.5 ? 'reverse' : 'chairs'; break;
+    case 1: kind = rand() < 0.6 ? 'steal' : 'swap'; break;
+    case 2: kind = 'shift'; break;
+    case 3: kind = rand() < 0.5 ? 'vault' : 'mijter'; break;
+    case 4: kind = 'duel'; break;
+    case 5: kind = 'reverse'; break;
     default: kind = FEATURES.book ? 'book' : 'chaos';
   }
-  if (kind === 'chairs' && m < 3) kind = 'reverse';
 
   if (kind === 'steal' || kind === 'swap') {
-    const { tpl, decks } = pickTpl(s, `r2:${kind}`, kind === 'steal' ? R2_STEAL : R2_SWAP);
+    const mj = s.mijter && playerById(s, s.mijter) && !playerById(s, s.mijter)!.paused ? s.mijter : null;
+    let picked = pickTpl(s, `r3:${kind}`, kind === 'steal' ? R3_STEAL : R3_SWAP);
+    for (let i = 0; i < 8 && mj && picked.tpl.focus && slots[picked.tpl.focus] === mj; i++) {
+      picked = pickTpl({ ...s, decks: picked.decks }, `r3:${kind}`, kind === 'steal' ? R3_STEAL : R3_SWAP);
+    }
+    const { tpl, decks } = picked;
     const focus = tpl.focus ? slots[tpl.focus] : undefined;
     const task: Task = {
       kind, emoji: kind === 'steal' ? '🦹' : '🔄', title: kind === 'steal' ? 'GERICHT STELEN' : 'GERICHT RUILEN',
@@ -195,9 +229,20 @@ function buildRound2(s: GameState, die: number, activeId: string): Built {
     if (s.locks.length) task.sub = rich('Een cadeau op slot 🔒 is veilig en mag niet worden gestolen of geruild.');
     return { task, effects: [], decks };
   }
+  if (kind === 'duel') {
+    const act = activePlayers(s).filter((p) => p.id !== c.A.id);
+    const noMj = act.filter((p) => p.id !== s.mijter);
+    const X = pick(noMj.length ? noMj : act.length ? act : [c.A]);
+    const { tpl, decks } = pickTpl(s, 'r3:duel', R_DUELS);
+    const sl = { A: c.A.id, X: X.id };
+    return {
+      task: { kind: 'duel', emoji: '⚔️', title: '1-TEGEN-1 DUEL', main: rich(tpl.t, sl), sub: rich(R3_DUEL_SUB), timerSec: tpl.timer ?? 10, highlight: [c.A.id, X.id] },
+      effects: [], decks,
+    };
+  }
   if (kind === 'shift') {
     const arrow: 'cw' | 'ccw' = rand() < 0.5 ? 'cw' : 'ccw';
-    const { tpl, decks } = pickTpl(s, 'r2:shift', R2_SHIFT);
+    const { tpl, decks } = pickTpl(s, 'r3:shift', R3_SHIFT);
     const parts: string[] = [];
     const sl: Record<string, string> = { A: c.A.id };
     const mj = s.mijter && playerById(s, s.mijter);
@@ -214,7 +259,7 @@ function buildRound2(s: GameState, die: number, activeId: string): Built {
     };
   }
   if (kind === 'vault') {
-    const { text, decks } = pickStr(s, 'r2:vault', R2_VAULT);
+    const { text, decks } = pickStr(s, 'r3:vault', R3_VAULT);
     const max = maxLocks(s);
     const already = s.locks.includes(c.A.id);
     let sub: Rich;
@@ -224,7 +269,7 @@ function buildRound2(s: GameState, die: number, activeId: string): Built {
     return { task: { kind, emoji: '🔒', title: 'DE KLUIS', main: rich(text, { A: c.A.id }), sub, highlight: [c.A.id] }, effects: [{ t: 'lock', id: c.A.id }], decks };
   }
   if (kind === 'mijter') {
-    const { text, decks } = pickStr(s, 'r2:mijter', R2_MIJTER);
+    const { text, decks } = pickStr(s, 'r3:mijter', R3_MIJTER);
     let sub: Rich | undefined;
     if (s.mijter && s.mijter !== c.A.id && playerById(s, s.mijter)) sub = rich('De Mijter verhuist van {OLD} naar {A}!', { OLD: s.mijter, A: c.A.id });
     else if (s.mijter === c.A.id) sub = rich('Je had hem al! Hou hem maar vast.');
@@ -232,40 +277,42 @@ function buildRound2(s: GameState, die: number, activeId: string): Built {
   }
   if (kind === 'reverse') {
     const nd = (s.direction === 1 ? -1 : 1) as 1 | -1;
-    const { text, decks } = pickStr(s, 'r2:reverse', R2_REVERSE);
+    const { text, decks } = pickStr(s, 'r3:reverse', R3_REVERSE);
+    const nId = nextActiveId(s, c.A.id, nd);
     return {
-      task: { kind, emoji: '🔄', title: 'RICHTING OMDRAAIEN', arrow: nd === 1 ? 'cw' : 'ccw', main: rich(text.replace('{DIR}', dirText(nd))), highlight: [c.A.id] },
+      task: { kind, emoji: '🔄', title: 'RICHTING OMDRAAIEN', arrow: nd === 1 ? 'cw' : 'ccw', main: rich(text.replace('{DIR}', dirText(nd)), { A: c.A.id, N: nId }), highlight: [c.A.id, nId] },
       effects: [{ t: 'reverse' }], decks,
     };
   }
-  if (kind === 'chairs') {
-    const act = shuffle(activePlayers(s));
-    const [P, Q] = [act[0], act[1]];
-    const { text, decks } = pickStr(s, 'r2:chairs', R2_CHAIRS);
-    return {
-      task: { kind, emoji: '💺', title: 'STOELENDANS', main: rich(text, { P: P.id, Q: Q.id }), sub: rich('De namen wisselen mee in de zitkring. Een slotje 🔒 blijft bij het cadeau op de stoel.'), highlight: [P.id, Q.id] },
-      effects: [{ t: 'swap', a: P.id, b: Q.id }], decks,
-    };
-  }
   if (kind === 'chaos') {
-    const v = randInt(3);
+    const roll10 = randInt(10);
+    const v = roll10 < 4 ? 0 : roll10 < 6 ? 1 : roll10 < 8 ? 2 : 3; // 0 stoelen, 1 dubbele stoelen, 2 dubbele ruil, 3 bonus
     const act = shuffle(activePlayers(s));
+    if (v === 0 && act.length >= 3) {
+      const P = c.A;
+      const Q = act.find((p) => p.id !== P.id)!;
+      const { text, decks } = pickStr(s, 'r3:chairs', R3_CHAIRS);
+      return {
+        task: { kind: 'chairs', emoji: '💺', title: 'CHAOS VAN PIET: STOELENDANS', main: rich(text, { P: P.id, Q: Q.id }), sub: rich('De namen wisselen mee in de zitkring. Een slotje 🔒 blijft bij het cadeau op de stoel.'), highlight: [P.id, Q.id] },
+        effects: [{ t: 'swap', a: P.id, b: Q.id }], decks,
+      };
+    }
     if (v === 1 && act.length >= 5) {
       const [P, Q, U, V] = act;
-      const { text, decks } = pickStr(s, 'r2:bigchairs', R2_BIGCHAIRS);
+      const { text, decks } = pickStr(s, 'r3:bigchairs', R3_BIGCHAIRS);
       return {
         task: { kind: 'chairs', emoji: '💥', title: 'CHAOS: STOELENDANS', main: rich(text, { P: P.id, Q: Q.id, U: U.id, V: V.id }), sub: rich('De namen wisselen mee in de zitkring. Een slotje 🔒 blijft bij het cadeau op de stoel.'), highlight: [P.id, Q.id, U.id, V.id] },
         effects: [{ t: 'swap', a: P.id, b: Q.id }, { t: 'swap', a: U.id, b: V.id }], decks,
       };
     }
-    if (v === 2) {
-      const { text, decks } = pickStr(s, 'r2:bonus', R2_BONUS);
+    if (v === 3) {
+      const { text, decks } = pickStr(s, 'r3:bonus', R3_BONUS);
       return {
         task: { kind: 'bonus', emoji: '🎰', title: 'BONUS-BEURT', main: rich(text, slots), sub: s.locks.length ? rich('Een cadeau op slot 🔒 is veilig.') : undefined, highlight: [c.A.id] },
         effects: [{ t: 'again' }], decks,
       };
     }
-    const { text, decks } = pickStr(s, 'r2:double', R2_DOUBLE);
+    const { text, decks } = pickStr(s, 'r3:double', R3_DOUBLE);
     return {
       task: { kind: 'swap', emoji: '💥', title: 'CHAOS: DUBBELE RUIL', main: rich(text, slots), sub: s.locks.length ? rich('Een cadeau op slot 🔒 is veilig en mag niet worden geruild.') : undefined, highlight: [c.A.id] },
       effects: [], decks,
@@ -300,7 +347,7 @@ export function startRound1(s: GameState, now: number): GameState {
   const young = s.players.find((p) => p.id === s.youngestId && !p.paused);
   const first = young ?? activePlayers(s)[0];
   return bump(s, {
-    phase: 'round1', direction: 1, locks: [], mijter: null, turnCount: 0, decks: {}, r2: null, banner: null,
+    phase: 'round1', direction: 1, locks: [], mijter: null, turnCount: 0, decks: {}, r3: null, banner: null,
     book: { queue: shuffle(s.submissions.map((x) => x.id)), usedIds: [], lastTargets: [], fallback: { queue: [], last: null } },
     turn: { activeId: first.id, stage: 'ready', die: null, rollMs: ROLL_MS, revealAt: 0, pending: null, task: null, resolvedAt: 0, timerEndsAt: null, timerDone: false, deadline: null, startedAt: now },
   }, 'start');
@@ -308,9 +355,9 @@ export function startRound1(s: GameState, now: number): GameState {
 
 export function roll(s: GameState, now: number, forceDie?: number): GameState {
   const t = s.turn;
-  if ((s.phase !== 'round1' && s.phase !== 'round2') || !t || t.stage !== 'ready') return s;
+  if ((s.phase !== 'round1' && s.phase !== 'round2' && s.phase !== 'round3') || !t || t.stage !== 'ready') return s;
   const die = forceDie ?? 1 + randInt(6);
-  const built = s.phase === 'round1' ? buildRound1(s, die, t.activeId) : buildRound2(s, die, t.activeId);
+  const built = s.phase === 'round1' ? buildRound1(s, die, t.activeId) : s.phase === 'round2' ? buildRound2(s, die, t.activeId) : buildRound3(s, die, t.activeId);
   const rollMs = inTurbo(s, now) ? ROLL_TURBO_MS : ROLL_MS;
   const turn: Turn = { ...t, stage: 'rolling', die, rollMs, revealAt: now + rollMs, pending: { task: built.task, effects: built.effects }, task: null, timerEndsAt: null, timerDone: false, deadline: null };
   return bump(s, { turn, decks: built.decks, book: built.book ?? s.book }, 'dice');
@@ -399,12 +446,12 @@ export function next(s: GameState, now: number): GameState {
   return bump(s, { turn, turnCount: s.turnCount + 1 }, 'next');
 }
 
-/** Einde Ronde 1: eerst een gezamenlijk uitpak-moment (de geheime klok van Ronde 2 start nog niet). */
-export function startUnwrap(s: GameState, now: number): GameState {
+/** Einde Ronde 1 (stapel leeg) -> Ronde 2: uitpakken & kijken, geen tijdslimiet. */
+export function startRound2(s: GameState, now: number): GameState {
   if (s.phase !== 'round1' || !s.turn || s.turn.stage === 'rolling') return s;
   const activeId = s.turn.stage === 'task' ? nextActiveId(s, s.turn.activeId, 1) : s.turn.activeId;
   const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: null };
-  return bump(s, { phase: 'unwrap', turn }, 'start');
+  return bump(s, { phase: 'round2', turn, banner: { text: 'RONDE 2: PAK ALLE CADEAUS UIT!', until: now + 5000 } }, 'round2');
 }
 
 export function setYoungest(s: GameState, id: string | null): GameState {
@@ -413,21 +460,21 @@ export function setYoungest(s: GameState, id: string | null): GameState {
   return bump(s, { youngestId: next });
 }
 
-export function startRound2(s: GameState, now: number): GameState {
-  if ((s.phase !== 'round1' && s.phase !== 'unwrap') || !s.turn || s.turn.stage === 'rolling') return s;
-  const nominal = s.settings.r2Minutes * 60_000;
+export function startRound3(s: GameState, now: number): GameState {
+  if (s.phase !== 'round2' || !s.turn || s.turn.stage === 'rolling') return s;
+  const nominal = s.settings.r3Minutes * 60_000;
   const endAt = now + Math.round(nominal * (0.87 + rand() * 0.26)); // geheim: ±13% rond de ingestelde tijd
   const falseAlarmAt = Math.max(now + 45_000, endAt - (50_000 + randInt(50_000)));
   const activeId = s.turn.stage === 'task' ? nextActiveId(s, s.turn.activeId, 1) : s.turn.activeId;
-  const r2 = { startAt: now, endAt, falseAlarmAt: Math.min(falseAlarmAt, endAt - 20_000), falseAlarmDone: false, tensionStarted: false };
-  const s2: GameState = { ...s, phase: 'round2', direction: 1, r2 };
+  const r3 = { startAt: now, endAt, falseAlarmAt: Math.min(falseAlarmAt, endAt - 20_000), falseAlarmDone: false, tensionStarted: false };
+  const s2: GameState = { ...s, phase: 'round3', direction: 1, r3 };
   const turn: Turn = { ...s.turn, activeId, stage: 'ready', die: null, task: null, pending: null, timerEndsAt: null, timerDone: false, resolvedAt: 0, startedAt: now, deadline: inTension(s2, now) ? now + TURN_LIMIT_MS : null };
-  return bump(s2, { turn, banner: { text: 'RONDE 2: DE GROTE FINALE!', until: now + 5000 } }, 'round2');
+  return bump(s2, { turn, banner: { text: 'RONDE 3: DE GROTE FINALE!', until: now + 5000 } }, 'round2');
 }
 
 export function resetToLobby(s: GameState): GameState {
   return bump(s, {
-    phase: 'lobby', turn: null, locks: [], mijter: null, direction: 1, r2: null, banner: null, decks: {}, turnCount: 0,
+    phase: 'lobby', turn: null, locks: [], mijter: null, direction: 1, r3: null, banner: null, decks: {}, turnCount: 0,
     book: { queue: [], usedIds: [], lastTargets: [], fallback: { queue: [], last: null } },
   });
 }
@@ -436,17 +483,17 @@ export function resetToLobby(s: GameState): GameState {
 export function tick(s: GameState, now: number): GameState {
   let cur = s;
   if (cur.banner && now > cur.banner.until) cur = bump(cur, { banner: null });
-  if (cur.phase === 'round2' && cur.r2) {
-    const r2 = cur.r2;
-    if (now >= r2.endAt) return bump(cur, { phase: 'finished', turn: cur.turn ? { ...cur.turn, stage: 'ready', pending: null, deadline: null, task: null } : null, banner: null }, 'horn');
-    if (!r2.tensionStarted && now >= r2.endAt - TENSION_MS) {
-      cur = bump(cur, { r2: { ...r2, tensionStarted: true }, turn: cur.turn && cur.turn.stage === 'ready' ? { ...cur.turn, deadline: now + TURN_LIMIT_MS } : cur.turn }, 'tension');
-    } else if (!r2.falseAlarmDone && now >= r2.falseAlarmAt) {
-      cur = bump(cur, { r2: { ...r2, falseAlarmDone: true }, banner: { text: 'TUUUT! Vals alarm van Piet! 😜 Nog even doorspelen...', until: now + 5000 } }, 'falseAlarm');
+  if (cur.phase === 'round3' && cur.r3) {
+    const r3 = cur.r3;
+    if (now >= r3.endAt) return bump(cur, { phase: 'finished', turn: cur.turn ? { ...cur.turn, stage: 'ready', pending: null, deadline: null, task: null } : null, banner: null }, 'horn');
+    if (!r3.tensionStarted && now >= r3.endAt - TENSION_MS) {
+      cur = bump(cur, { r3: { ...r3, tensionStarted: true }, turn: cur.turn && cur.turn.stage === 'ready' ? { ...cur.turn, deadline: now + TURN_LIMIT_MS } : cur.turn }, 'tension');
+    } else if (!r3.falseAlarmDone && now >= r3.falseAlarmAt) {
+      cur = bump(cur, { r3: { ...r3, falseAlarmDone: true }, banner: { text: 'TUUUT! Vals alarm van Piet! 😜 Nog even doorspelen...', until: now + 5000 } }, 'falseAlarm');
     }
   }
   const t = cur.turn;
-  if (t && (cur.phase === 'round1' || cur.phase === 'round2')) {
+  if (t && (cur.phase === 'round1' || cur.phase === 'round2' || cur.phase === 'round3')) {
     if (t.stage === 'rolling' && t.pending && now >= t.revealAt) cur = resolveRoll(cur, now);
     else if (t.stage === 'task' && t.timerEndsAt && !t.timerDone && now >= t.timerEndsAt) cur = bump(cur, { turn: { ...t, timerDone: true } }, 'timerEnd');
     else if (t.stage === 'ready' && t.deadline && now >= t.deadline) {
@@ -514,7 +561,7 @@ export function removeSubmission(s: GameState, id: string): GameState {
 /* ---------- laden/opslaan ---------- */
 
 export function isValidState(x: any): x is GameState {
-  return !!x && x.v === 1 && Array.isArray(x.players) && Array.isArray(x.submissions) && typeof x.phase === 'string';
+  return !!x && x.v === 2 && Array.isArray(x.players) && Array.isArray(x.submissions) && typeof x.phase === 'string';
 }
 
 export type { Phase, Audience };

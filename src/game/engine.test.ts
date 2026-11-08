@@ -12,6 +12,8 @@ const subs = (n: number): Submission[] =>
     type: i % 3 === 0 ? 'poem' : 'secret', content: `Inzending nummer ${i} met genoeg tekst.`,
   }));
 
+const toFinale = (s: GameState, now = 0) => E.startRound3(E.startRound2(s, now), now);
+
 function play(s: GameState, now: number, die?: number) {
   s = E.roll(s, now, die);
   now += 3000;
@@ -76,27 +78,85 @@ test('jongste speler begint; zonder keuze begint de host', () => {
   assert.equal(E.setYoungest(s2, s2.players[1].id), s2); // alleen in de lobby
 });
 
-test('uitpak-moment tussen ronde 1 en 2: klok start pas daarna', () => {
+test('3 rondes: 1 -> 2 (geen klok) -> 3 (geheime klok)', () => {
   let s = E.startRound1(E.createState('X', names, []), 0);
-  s = E.startUnwrap(s, 1000);
-  assert.equal(s.phase, 'unwrap');
-  assert.equal(s.r2, null);
-  assert.equal(E.roll(s, 1100), s);
-  s = E.startRound2(s, 5000);
+  s = E.startRound2(s, 1000);
   assert.equal(s.phase, 'round2');
-  assert.ok(s.r2!.startAt === 5000);
+  assert.equal(s.r3, null);
+  assert.equal(E.tick(s, 10 * 60 * 60_000).phase, 'round2'); // geen tijdslimiet in ronde 2
+  assert.equal(E.startRound2(s, 2000), s); // niet dubbel starten
+  s = E.startRound3(s, 5000);
+  assert.equal(s.phase, 'round3');
+  assert.ok(s.r3!.startAt === 5000);
+});
+
+test('ronde 2: uitpakken (1 en 6), buren-ruil, overkant, 10s-duel, cadeau-balans', () => {
+  const s0 = E.startRound2(E.startRound1(E.createState('X', names, []), 0), 0);
+  const t = (die: number) => play(s0, 0, die).s.turn!.task!;
+  for (const d of [1, 6]) {
+    assert.equal(t(d).kind, 'unwrap');
+    assert.match(t(d).sub!.tpl, /ingepakt cadeau bij iemand anders/);
+  }
+  assert.equal(t(2).kind, 'neighbor');
+  assert.match(t(2).sub!.tpl, /buurman kiest wat je terugkrijgt/);
+  const o = t(3);
+  assert.equal(o.kind, 'opposite');
+  assert.equal(o.highlight!.length, 2);
+  const d = t(4);
+  assert.equal(d.kind, 'duel');
+  assert.equal(d.timerSec, 10);
+  assert.notEqual(d.main.slots.A, d.main.slots.X);
+  assert.match(d.sub!.tpl, /stelen én het direct uitpakken/);
+  const b = t(5);
+  assert.equal(b.kind, 'balance');
+  assert.match(b.main.tpl, /MEESTE/);
+});
+
+test('ronde 3: gooi 1 stelen/ruilen, 2 schuif, 3 kluis/mijter, 4 duel, 5 omdraaien, 6 chaos', () => {
+  const s0 = toFinale(E.startRound1(E.createState('X', names, []), 0));
+  const kinds = (die: number) => new Set(Array.from({ length: 80 }, () => play(s0, 0, die).s.turn!.task!.kind));
+  assert.deepEqual([...kinds(1)].sort(), ['steal', 'swap']);
+  assert.deepEqual([...kinds(2)], ['shift']);
+  assert.deepEqual([...kinds(3)].sort(), ['mijter', 'vault']);
+  assert.deepEqual([...kinds(4)], ['duel']);
+  assert.deepEqual([...kinds(5)], ['reverse']);
+  const k6 = kinds(6);
+  assert.ok(k6.has('chairs') && !k6.has('book'));
+  const d = play(s0, 0, 4).s.turn!;
+  assert.equal(d.task!.timerSec, 10);
+  const r = play(s0, 0, 5).s;
+  assert.equal(r.direction, -1);
+  assert.ok(r.turn!.task!.main.slots.N);
+  assert.match(r.turn!.task!.main.tpl, /ruil een cadeau met \{N\}/);
+});
+
+test('mijter: niemand steelt van de mijter-houder; duel kiest hem niet', () => {
+  let s = toFinale(E.startRound1(E.createState('X', names, []), 0));
+  const holder = s.players[1].id;
+  s = { ...s, mijter: holder };
+  for (let i = 0; i < 80; i++) {
+    for (const die of [1, 4]) {
+      const t = play(s, 0, die).s.turn!.task!;
+      if (t.kind === 'steal' || t.kind === 'swap') {
+        const tpl = t.main.tpl;
+        const tok = /\{([LROX])\}/.exec(tpl);
+        if (tok && /steel|ruil/.test(tpl)) assert.notEqual(t.main.slots[tok[1]], holder);
+      }
+      if (t.kind === 'duel') assert.notEqual(t.main.slots.X, holder);
+    }
+  }
 });
 
 test('slotjes schalen mee en verhuizen', () => {
   let s = E.createState('X', names, subs(0)); // 6 spelers -> max 2
   s = E.startRound1(s, 0);
-  s = E.startRound2(s, 0);
+  s = toFinale(s, 0);
   assert.equal(E.maxLocks(s), 2);
   let now = 0;
   for (let i = 0; i < 6; i++) {
     for (let k = 0; k < 40 && !(s.locks.includes(s.turn!.activeId)); k++) {
       // gooi 4 tot we een kluis hebben
-      const r = play(s, now, 4);
+      const r = play(s, now, 3);
       s = r.s; now = r.now;
       if (s.turn!.task!.kind !== 'vault') { s = E.next(s, now + 1000); now += 2000; }
     }
@@ -106,13 +166,13 @@ test('slotjes schalen mee en verhuizen', () => {
 });
 
 test('stoelendans wisselt namen en laat slotje bij de stoel', () => {
-  let s = E.startRound2(E.startRound1(E.createState('X', names, []), 0), 0);
+  let s = toFinale(E.startRound1(E.createState('X', names, []), 0), 0);
   s = { ...s, locks: [s.players[0].id] };
   const before = s.players.map((p) => p.id);
   let now = 0;
   let found = false;
   for (let i = 0; i < 300 && !found; i++) {
-    const r = play(s, now, 5);
+    const r = play(s, now, 6);
     s = r.s; now = r.now;
     const t = s.turn!.task!;
     if (t.kind === 'chairs') {
@@ -134,7 +194,7 @@ test('Grote Boek: eerst inzendingen, nooit 3x dezelfde schuldige, daarna ingebou
   FEATURES.book = true;
   try {
   const many: Submission[] = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, authorName: 'Tim', targetPlayerName: 'Lisa', type: 'secret', content: `Alles over Lisa ${i} en meer` }));
-  let s = E.startRound2(E.startRound1(E.createState('X', names, many), 0), 0);
+  let s = toFinale(E.startRound1(E.createState('X', names, many), 0), 0);
   let now = 0;
   const seen: string[] = [];
   for (let i = 0; i < 5; i++) {
@@ -156,7 +216,7 @@ test('Grote Boek: eerst inzendingen, nooit 3x dezelfde schuldige, daarna ingebou
 test('boek-onthulling pas na tromgeroffel; Volgende pas na onthulling', () => {
   FEATURES.book = true;
   try {
-  let s = E.startRound2(E.startRound1(E.createState('X', names, subs(4)), 0), 0);
+  let s = toFinale(E.startRound1(E.createState('X', names, subs(4)), 0), 0);
   const r = play(s, 0, 6);
   s = r.s;
   const t0 = r.now;
@@ -168,25 +228,25 @@ test('boek-onthulling pas na tromgeroffel; Volgende pas na onthulling', () => {
 });
 
 test('einde: onzichtbare klok, tension, vals alarm, turbo, finish', () => {
-  let s = E.startRound2(E.startRound1(E.createState('X', names, []), 0), 0);
-  const { endAt, falseAlarmAt } = s.r2!;
+  let s = toFinale(E.startRound1(E.createState('X', names, []), 0), 0);
+  const { endAt, falseAlarmAt } = s.r3!;
   assert.ok(endAt >= 30 * 60000 * 0.87 - 1 && endAt <= 30 * 60000 * 1.13 + 1);
   assert.ok(falseAlarmAt < endAt);
   s = E.tick(s, endAt - E.TENSION_MS + 1);
-  assert.ok(s.r2!.tensionStarted);
+  assert.ok(s.r3!.tensionStarted);
   assert.ok(s.turn!.deadline);
   assert.equal(E.inTurbo(s, endAt - E.TURBO_MS + 1), true);
   s = E.tick(s, falseAlarmAt + 1);
-  assert.ok(s.r2!.falseAlarmDone);
-  assert.equal(s.phase, 'round2');
+  assert.ok(s.r3!.falseAlarmDone);
+  assert.equal(s.phase, 'round3');
   s = E.tick(s, endAt + 1);
   assert.equal(s.phase, 'finished');
   assert.equal(E.roll(s, endAt + 2), s); // dobbelknop geblokkeerd
 });
 
 test('Schiet-op-Piet: na 25s rolt de dobbelsteen vanzelf', () => {
-  let s = E.startRound2(E.startRound1(E.createState('X', names, []), 0), 0);
-  const t = s.r2!.endAt - E.TENSION_MS + 10;
+  let s = toFinale(E.startRound1(E.createState('X', names, []), 0), 0);
+  const t = s.r3!.endAt - E.TENSION_MS + 10;
   s = E.tick(s, t);
   s = E.tick(s, t + E.TURN_LIMIT_MS + 1);
   assert.equal(s.turn!.stage, 'rolling');
@@ -196,7 +256,7 @@ test('volledige simulatie van 400 beurten crasht niet en houdt invarianten', () 
   let s = E.startRound1(E.createState('X', names, subs(10)), 0);
   let now = 0;
   for (let i = 0; i < 400; i++) {
-    if (i === 60) s = E.startRound2(s, now);
+    if (i === 60) s = toFinale(s, now);
     const r = play(s, now);
     s = r.s; now = r.now + 1500;
     if (s.turn?.task?.book) { s = E.revealBook(s, now + 4000); now += 4000; }
@@ -206,13 +266,13 @@ test('volledige simulatie van 400 beurten crasht niet en houdt invarianten', () 
     assert.ok(s.locks.length <= E.maxLocks(s));
     assert.ok(s.phase !== 'finished' || i > 0);
     if (s.phase === 'finished') break;
-    if (s.r2) now = Math.min(now, s.r2.endAt - 60_000 * 6);
+    if (s.r3) now = Math.min(now, s.r3.endAt - 60_000 * 6);
   }
 });
 
 test('MVP: worp 6 in ronde 2 is nooit het Grote Boek maar chaos/bonus', () => {
   const kinds = new Set<string>();
-  let s0 = E.startRound2(E.startRound1(E.createState('X', names, subs(5)), 0), 0);
+  let s0 = toFinale(E.startRound1(E.createState('X', names, subs(5)), 0), 0);
   for (let i = 0; i < 60; i++) {
     const r = play(s0, 0, 6);
     const t = r.s.turn!.task!;
@@ -223,7 +283,7 @@ test('MVP: worp 6 in ronde 2 is nooit het Grote Boek maar chaos/bonus', () => {
 });
 
 test('bonus-beurt: dezelfde speler gooit nog een keer; stoelen-chaos wisselt twee paren', () => {
-  let s = E.startRound2(E.startRound1(E.createState('X', names, []), 0), 0);
+  let s = toFinale(E.startRound1(E.createState('X', names, []), 0), 0);
   let sawBonus = false, sawBig = false, now = 0;
   for (let i = 0; i < 200 && !(sawBonus && sawBig); i++) {
     const before = s.players.map((p) => p.id);
@@ -237,7 +297,7 @@ test('bonus-beurt: dezelfde speler gooit nog een keer; stoelen-chaos wisselt twe
       assert.equal(s.turn!.activeId, active);
       assert.equal(s.turn!.again, false);
     } else {
-      if (t.title.includes('STOELENDANS')) {
+      if (t.title === 'CHAOS: STOELENDANS') {
         sawBig = true;
         const after = s.players.map((p) => p.id);
         assert.equal(after.filter((id, k) => id !== before[k]).length, 4);

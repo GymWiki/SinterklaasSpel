@@ -25,7 +25,10 @@ Tabellen worden automatisch aangemaakt (`CREATE TABLE IF NOT EXISTS`); `npm run 
 Alles draait 100% lokaal (localStorage); er zijn geen database-requests nodig. TV en controller moeten in dezelfde browser
 (twee tabbladen/vensters op dezelfde laptop) draaien.
 
-Ronde 1 = Verdeelronde met 6 vaste uitkomsten, dan een uitpak-moment, dan Ronde 2 (geheime stoomboot-klok) waar worp 6 Chaos/Bonus is.
+Drie rondes:
+1. **Verdeelronde** (geen tijdslimiet): 6 vaste uitkomsten, tot de stapel leeg is.
+2. **Uitpak- & Kijkronde** (geen tijdslimiet): tot elk cadeau is uitgepakt (uitpakken, buren-ruil, overkant-wissel, 10s-duel, cadeau-balans).
+3. **Geheime Stoomboot-Finale** (geheime timer): stelen, Kluis 🔒, Mijter 🛡️, 10s-duel, richting omdraaien en Chaos van Piet (stoelendans). Laatste 5 minuten: 20s Schiet-op-Piet, vals alarm, turbo en eindsignaal.
 
 **Het Grote Boek staat uit** (`src/lib/features.ts` → `FEATURES.book = false`). Code, API-routes (`/api/rooms/**`),
 pagina's `/nieuw` en `/join/[roomId]` en de Drizzle-tabellen (`rooms`, `submissions`) zijn intact; zet de vlag op `true` om alles terug te krijgen.

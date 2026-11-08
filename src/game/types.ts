@@ -16,7 +16,7 @@ export interface Submission {
   content: string;
 }
 
-export type Phase = 'lobby' | 'round1' | 'unwrap' | 'round2' | 'finished';
+export type Phase = 'lobby' | 'round1' | 'round2' | 'round3' | 'finished';
 
 /** Tekst met tokens ({A}, {L}...) + welke speler bij welk token hoort. */
 export interface Rich {
@@ -26,7 +26,7 @@ export interface Rich {
 
 export type TaskKind =
   | 'unwrap' | 'give' | 'neighbor' | 'opposite' | 'mini' | 'bonus' | 'party'
-  | 'steal' | 'bonus' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
+  | 'steal' | 'duel' | 'balance' | 'bonus' | 'swap' | 'shift' | 'vault' | 'mijter' | 'reverse' | 'chairs' | 'book';
 
 export interface BookCard {
   id: string;
@@ -87,12 +87,12 @@ export interface DeckState {
 }
 
 export interface GameState {
-  v: 1;
+  v: 2;
   rev: number;
   roomId: string;
   isDemo: boolean;
   phase: Phase;
-  settings: { audience: Audience; r2Minutes: number };
+  settings: { audience: Audience; r3Minutes: number };
   players: Player[];
   submissions: Submission[];
   removedIds: string[];
@@ -106,7 +106,7 @@ export interface GameState {
   /** jongste speler: begint met dobbelen in Ronde 1 */
   youngestId?: string | null;
   book: { queue: string[]; usedIds: string[]; lastTargets: string[]; fallback: DeckState };
-  r2: { startAt: number; endAt: number; falseAlarmAt: number; falseAlarmDone: boolean; tensionStarted: boolean } | null;
+  r3: { startAt: number; endAt: number; falseAlarmAt: number; falseAlarmDone: boolean; tensionStarted: boolean } | null;
   banner: { text: string; until: number } | null;
   fx: { id: number; name: FxName } | null;
 }

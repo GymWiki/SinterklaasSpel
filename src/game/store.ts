@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { isValidState, tick } from './engine';
 import type { GameState } from './types';
 
-export const storageKey = (id: string) => `pakjesavond:v1:${id}`;
+export const storageKey = (id: string) => `pakjesavond:v2:${id}`;
 export const pinKey = (id: string) => `pakjesavond:pin:${id}`;
 const chanName = (id: string) => `pakjesavond-${id}`;
 

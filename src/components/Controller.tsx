@@ -4,13 +4,13 @@ import { Ring } from './Ring';
 import { Dice } from './Dice';
 import { RichText } from './Rich';
 import { PlayersPanel } from './PlayersPanel';
-import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2, startUnwrap } from '@/game/engine';
+import { canNext, inTension, next, nextActiveId, playerById, resetToLobby, revealBook, roll, startRound2, startRound3 } from '@/game/engine';
 import type { GameState } from '@/game/types';
 
 type Upd = (fn: (s: GameState, now: number) => GameState) => void;
 
 export function Controller({ state: s, update, now }: { state: GameState; update: Upd; now: number }) {
-  const [armed, setArmed] = useState<'' | 'r2' | 'unwrap' | 'reset'>('');
+  const [armed, setArmed] = useState<'' | 'r2' | 'r3' | 'reset'>('');
   const [panel, setPanel] = useState(false);
   useEffect(() => {
     if (!armed) return;
@@ -43,29 +43,14 @@ export function Controller({ state: s, update, now }: { state: GameState; update
     );
   }
 
-  if (s.phase === 'unwrap') {
-    return (
-      <div className="stack">
-        <section className="card stop-card">
-          <div className="stop-ic">🎁🎉</div>
-          <h1>Uitpak-moment!</h1>
-          <p>Iedereen pakt nu alle nog ingepakte cadeaus uit. De geheime klok van Ronde 2 start pas als je hieronder tikt.</p>
-          <button className={`btn big ${armed === 'r2' ? 'danger' : 'primary'}`} onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}>
-            {armed === 'r2' ? 'Zeker weten? Tik nogmaals om te starten!' : 'Iedereen heeft uitgepakt → Start de Finale (Ronde 2)'}
-          </button>
-        </section>
-      </div>
-    );
-  }
-
   if (!t || !active) return null;
   return (
     <div className="stack">
       <section className={`card turn-card ${inTension(s, now) ? 'tension' : ''}`} style={{ ['--c' as any]: active.color }}>
         <div className="turn-top">
-          <span className="chip">{s.phase === 'round1' ? 'Ronde 1' : 'Ronde 2'}</span>
+          <span className="chip">{s.phase === 'round1' ? 'Ronde 1 · Verdelen' : s.phase === 'round2' ? 'Ronde 2 · Uitpakken' : 'Ronde 3 · Finale'}</span>
           <span className="chip">{s.direction === 1 ? '↻ met de klok mee' : '↺ tegen de klok in'}</span>
-          {s.phase === 'round2' && <span className="chip">🔒 {s.locks.length}{s.mijter ? ' · 🛡️' : ''}</span>}
+          {s.phase === 'round3' && <span className="chip">🔒 {s.locks.length}{s.mijter ? ' · 🛡️' : ''}</span>}
         </div>
 
         {t.stage === 'ready' && (
@@ -111,11 +96,23 @@ export function Controller({ state: s, update, now }: { state: GameState; update
       {s.phase === 'round1' && (
         <section className="card">
           <button
-            className={`btn big ${armed === 'unwrap' ? 'danger' : 'ghost'}`}
+            className={`btn big ${armed === 'r2' ? 'danger' : 'ghost'}`}
             disabled={t.stage === 'rolling'}
-            onClick={() => (armed === 'unwrap' ? (setArmed(''), update(startUnwrap)) : setArmed('unwrap'))}
+            onClick={() => (armed === 'r2' ? (setArmed(''), update(startRound2)) : setArmed('r2'))}
           >
-            {armed === 'unwrap' ? 'Zeker weten? Tik nogmaals!' : 'Alle cadeaus zijn verdeeld → Start Ronde 2'}
+            {armed === 'r2' ? 'Zeker weten? Tik nogmaals!' : 'Stapel is leeg → Start Ronde 2'}
+          </button>
+        </section>
+      )}
+
+      {s.phase === 'round2' && (
+        <section className="card">
+          <button
+            className={`btn big ${armed === 'r3' ? 'danger' : 'ghost'}`}
+            disabled={t.stage === 'rolling'}
+            onClick={() => (armed === 'r3' ? (setArmed(''), update(startRound3)) : setArmed('r3'))}
+          >
+            {armed === 'r3' ? 'Zeker weten? Tik nogmaals om de finale te starten!' : 'Alle cadeaus zijn uitgepakt → Start De Grote Finale (Ronde 3)'}
           </button>
         </section>
       )}

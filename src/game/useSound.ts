@@ -48,8 +48,8 @@ export function useSoundDriver(state: GameState | null, now: number, enabled: bo
 
   let mode: MusicMode = 'off';
   if (state?.phase === 'round1') mode = 'calm';
-  else if (state?.phase === 'unwrap') mode = 'lively';
-  else if (state?.phase === 'round2') mode = inTension(state, now) ? 'tense' : 'lively';
+  else if (state?.phase === 'round2') mode = 'lively';
+  else if (state?.phase === 'round3') mode = inTension(state, now) ? 'tense' : 'lively';
   useEffect(() => {
     sfx.setMusic(enabled ? mode : 'off');
   }, [mode, enabled]);
